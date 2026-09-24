@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react'
 import type { Metadata } from 'next'
+import AdminShell from '@/components/admin/admin-shell'
 import { AdminDocument, adminMetadata } from '@/components/admin/admin-document'
-import { logout } from '@/server/actions/auth'
 import { requireStaffPage } from '@/server/dal/session'
+import { getNavCounts } from '@/server/queries/admin'
 
 export const metadata: Metadata = adminMetadata
 // Per-request by design (session + locale cookie): never prerendered.
@@ -10,23 +11,18 @@ export const instant = false
 
 /**
  * Root layout of the protected dashboard. The DAL check runs BEFORE any
- * markup is produced, so an invalid session is answered with a real HTTP
- * redirect/404 and not a single byte of the admin shell is streamed.
- * Pages, queries and actions re-check too: layouts do not re-run on every
- * client-side navigation.
+ * markup is produced, so an invalid session is answered with a redirect/404
+ * and not a single byte of the admin shell is streamed. Pages, queries and
+ * actions re-check too: layouts do not re-run on every client navigation.
  */
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const user = await requireStaffPage()
+  const counts = await getNavCounts()
   return (
     <AdminDocument>
-      {/* PLACEHOLDER chrome: sidebar/header are ported in the UI phase. */}
-      <div className="p-8">
-        <header className="flex justify-between">
-          <span>{user.email} · {user.role}</span>
-          <form action={logout}><button type="submit">Sign out</button></form>
-        </header>
+      <AdminShell user={{ email: user.email, role: user.role }} counts={counts}>
         {children}
-      </div>
+      </AdminShell>
     </AdminDocument>
   )
 }

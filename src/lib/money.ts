@@ -1,5 +1,3 @@
-export const VAT_RATE = 0.15
-
 /** 12.5 SAR → 1250 halalas. Rounds to the nearest halala. */
 export const sarToHalalas = (sar: number) => Math.round(sar * 100)
 export const halalasToSar = (halalas: number) => halalas / 100

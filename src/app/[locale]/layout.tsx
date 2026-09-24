@@ -1,14 +1,26 @@
 import type { ReactNode } from 'react'
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { hasLocale, NextIntlClientProvider } from 'next-intl'
-import { setRequestLocale } from 'next-intl/server'
+import { getTranslations, setRequestLocale } from 'next-intl/server'
+import { ThemeProvider } from '@/components/providers/theme-provider'
 import { localeDirection, routing } from '@/i18n/routing'
+import { fontVariables } from '@/styles/fonts'
 import '@/styles/globals.css'
-
-// PLACEHOLDER shell: fonts, ThemeProvider and navigation arrive in the UI phase.
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }))
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'Meta' })
+  return {
+    title: t('title'),
+    description: t('description'),
+    icons: { icon: '/favicon.svg' },
+    alternates: { languages: { ar: '/ar', en: '/en' } },
+  }
 }
 
 export default async function LocaleLayout({ children, params }: { children: ReactNode; params: Promise<{ locale: string }> }) {
@@ -17,9 +29,11 @@ export default async function LocaleLayout({ children, params }: { children: Rea
   setRequestLocale(locale)
 
   return (
-    <html lang={locale} dir={localeDirection(locale)} suppressHydrationWarning>
+    <html lang={locale} dir={localeDirection(locale)} className={fontVariables} suppressHydrationWarning>
       <body>
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <ThemeProvider>
+          <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
