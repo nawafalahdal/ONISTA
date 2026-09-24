@@ -45,7 +45,8 @@ const products = [
 
 async function main() {
   // Safe to run on every deploy: the sample catalog is only inserted into an
-  // empty database, and an existing admin account is never modified.
+  // empty database, and an existing admin account is never modified unless
+  // SEED_ADMIN_RESET_PASSWORD=true is set explicitly.
   if ((await db.category.count()) === 0) await seedCatalog()
   else console.log('Catalog exists: skipped sample data.')
   await seedAdmin()
@@ -85,33 +86,96 @@ async function seedCatalog() {
   }
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+/** Returns the reasons a password is rejected (empty list = acceptable). */
+function passwordProblems(password: string): string[] {
+  const problems: string[] = []
+  if (password.length < 12) problems.push('at least 12 characters')
+  if (password.length > 128) problems.push('at most 128 characters')
+  const classes = [/[a-z]/, /[A-Z]/, /\d/, /[^A-Za-z0-9]/].filter((re) => re.test(password)).length
+  if (classes < 3) problems.push('at least 3 of: lowercase, uppercase, digit, symbol')
+  if (/^(.)\1+$/.test(password)) problems.push('not a single repeated character')
+  return problems
+}
+
+function warn(lines: string[]) {
+  console.warn(['', ...lines.map((l, i) => (i === 0 ? `⚠️  ${l}` : `    ${l}`)), ''].join('\n'))
+}
+
 async function seedAdmin() {
   // First admin account. Credentials come from the environment, never code.
-  const email = process.env.SEED_ADMIN_EMAIL?.toLowerCase()
-  const password = process.env.SEED_ADMIN_PASSWORD
-  if (email && password) {
-    if (password.length < 12) {
-      // Don't block the whole deploy; the storefront still ships. The admin
-      // account is created on the next deploy after the password is fixed.
-      console.warn('\n⚠️  SEED_ADMIN_PASSWORD is shorter than 12 characters: admin account NOT created.')
-      console.warn('    Update it in Vercel → Settings → Environment Variables, then redeploy.\n')
-      return
-    }
-    await db.user.upsert({
-      where: { email },
-      update: {},
-      create: { email, name: 'Onista Admin', role: 'ADMIN', passwordHash: await bcrypt.hash(password, 12) },
-    })
-    console.log(`Admin user ready: ${email}`)
-  } else {
+  // Values pasted into dashboards often carry stray spaces or newlines.
+  const email = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase()
+  const rawPassword = process.env.SEED_ADMIN_PASSWORD
+  const password = rawPassword?.trim()
+  const resetPassword = process.env.SEED_ADMIN_RESET_PASSWORD === 'true'
+
+  if (!email || !password) {
     console.log('SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD not set: skipped admin user.')
+    return
+  }
+  if (rawPassword !== password) {
+    console.warn('ℹ️  SEED_ADMIN_PASSWORD had leading/trailing whitespace; it was trimmed.')
+  }
+  if (!EMAIL_RE.test(email)) {
+    warn(['SEED_ADMIN_EMAIL is not a valid e-mail address: admin account NOT created.'])
+    return
+  }
+  const problems = passwordProblems(password)
+  if (problems.length) {
+    warn([
+      'SEED_ADMIN_PASSWORD is too weak: admin account NOT created. It needs:',
+      ...problems.map((p) => `- ${p}`),
+      'Update it in Vercel → Settings → Environment Variables, then redeploy.',
+    ])
+    return
+  }
+
+  const existing = await db.user.findUnique({ where: { email }, select: { id: true, role: true } })
+
+  if (!existing) {
+    await db.user.create({
+      data: { email, name: 'Onista Admin', role: 'ADMIN', passwordHash: await bcrypt.hash(password, 12) },
+    })
+    console.log(`✓ Admin account created: ${email}`)
+    return
+  }
+
+  if (resetPassword) {
+    // Explicit recovery path: new password, lockout cleared, and every
+    // existing session revoked. Remove the flag after the deploy.
+    await db.user.update({
+      where: { id: existing.id },
+      data: {
+        passwordHash: await bcrypt.hash(password, 12),
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+        isActive: true,
+        sessionVersion: { increment: 1 },
+      },
+    })
+    warn([
+      `Admin password RESET for ${email} (all sessions signed out).`,
+      'Remove SEED_ADMIN_RESET_PASSWORD from the environment now.',
+    ])
+    return
+  }
+
+  console.log(`✓ Admin account exists: ${email} (unchanged; set SEED_ADMIN_RESET_PASSWORD=true to reset its password)`)
+  if (existing.role !== 'ADMIN') {
+    warn([`${email} exists with role ${existing.role}, not ADMIN. Its role was not changed.`])
   }
 }
+
+// On Vercel a seeding problem must never fail the deploy (the storefront still
+// ships and the build log explains what to fix). Locally it fails loudly.
+const failBuild = !process.env.VERCEL
 
 main()
   .then(() => db.$disconnect())
   .catch(async (e) => {
-    console.error(e)
+    console.error(failBuild ? e : `\n⚠️  Seeding failed (deploy continues): ${e instanceof Error ? e.message : e}\n`)
     await db.$disconnect()
-    process.exit(1)
+    process.exit(failBuild ? 1 : 0)
   })
