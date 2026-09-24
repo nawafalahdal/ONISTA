@@ -44,6 +44,14 @@ const products = [
 ] as const
 
 async function main() {
+  // Safe to run on every deploy: the sample catalog is only inserted into an
+  // empty database, and an existing admin account is never modified.
+  if ((await db.category.count()) === 0) await seedCatalog()
+  else console.log('Catalog exists: skipped sample data.')
+  await seedAdmin()
+}
+
+async function seedCatalog() {
   for (const [i, c] of categories.entries()) {
     await db.category.upsert({
       where: { slug: c.slug },
@@ -75,7 +83,9 @@ async function main() {
       },
     })
   }
+}
 
+async function seedAdmin() {
   // First admin account. Credentials come from the environment, never code.
   const email = process.env.SEED_ADMIN_EMAIL?.toLowerCase()
   const password = process.env.SEED_ADMIN_PASSWORD
