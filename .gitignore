@@ -1,4 +1,21 @@
+# dependencies
 node_modules
-dist
+
+# next.js
+.next
+out
+next-env.d.ts
+*.tsbuildinfo
+
+# prisma generated client
+src/generated
+
+# env (never commit secrets; see .env.example)
+.env
+.env*.local
+
+# misc
 .DS_Store
 *.log
+prototype/node_modules
+prototype/dist

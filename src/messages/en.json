@@ -1,0 +1,14 @@
+{
+  "Meta": { "title": "Onista Cake Shop", "description": "Signature cakes, handcrafted daily in Riyadh." },
+  "Validation": {
+    "required": "This field is required.",
+    "tooLong": "Too long.",
+    "invalidPhone": "Enter a valid phone number.",
+    "invalidEmail": "Enter a valid email address.",
+    "selectSamples": "Pick between 1 and 5 samples.",
+    "unavailableSamples": "Some selected items are no longer available.",
+    "rateLimited": "Too many attempts. Please try again in a few minutes.",
+    "generic": "Something went wrong. Please try again."
+  },
+  "Admin": { "unauthorized": "You do not have access to this area.", "signIn": "Sign in" }
+}

@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+/* Class-based dark mode (toggled by next-themes on <html>). Full design tokens
+   for light/dark are ported from the prototype in the UI phase. */
+@custom-variant dark (&:where(.dark, .dark *));

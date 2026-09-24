@@ -1,0 +1,295 @@
+// Onista Cake Shop — database schema
+//
+// Conventions
+// - Money is stored as integer halalas (1 SAR = 100 halalas) to avoid
+//   floating-point rounding. Format for display at the edge only.
+// - Translatable content lives in *Translation tables keyed by (entity, locale)
+//   so adding a third language is a data change, not a migration.
+// - Orders and tasting requests snapshot product titles/prices at the time of
+//   submission; product edits or archiving never rewrite history.
+// - Products are archived (archivedAt), not hard-deleted, once referenced.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum Locale {
+  ar
+  en
+}
+
+/// CUSTOMER can never reach /admin. STAFF manages orders, requests and the
+/// catalog. ADMIN additionally manages users and destructive operations.
+enum Role {
+  CUSTOMER
+  STAFF
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum FulfillmentMethod {
+  DELIVERY
+  PICKUP
+}
+
+enum PaymentMethod {
+  CARD
+  APPLE_PAY
+  CASH
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  REFUNDED
+  FAILED
+}
+
+enum TastingRequestStatus {
+  NEW
+  CONTACTED
+  SCHEDULED
+  CONVERTED
+  DECLINED
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Identity & access
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String  @id @default(cuid())
+  email        String  @unique /// stored lower-cased
+  name         String?
+  /// bcrypt hash. Null for accounts that cannot sign in with a password.
+  passwordHash String?
+  role         Role    @default(CUSTOMER)
+  isActive     Boolean @default(true)
+
+  /// Bumped to revoke every JWT issued to this user (password change,
+  /// role change, deactivation). Compared against the token on each
+  /// server-side session check.
+  sessionVersion Int @default(0)
+
+  // Brute-force protection
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  lastLoginAt         DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders    Order[]
+  auditLogs AuditLog[]
+
+  @@index([role])
+}
+
+/// Append-only trail of privileged actions performed from /admin.
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action     String   @db.VarChar(64) /// e.g. "product.update"
+  entityType String   @db.VarChar(64)
+  entityId   String?  @db.VarChar(64)
+  metadata   Json?
+  ipHash     String?  @db.VarChar(64)
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorId, createdAt])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Catalog
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Category {
+  id        String   @id @default(cuid())
+  slug      String   @unique @db.VarChar(80)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  translations CategoryTranslation[]
+  products     Product[]
+}
+
+model CategoryTranslation {
+  id         String   @id @default(cuid())
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  locale     Locale
+  name       String   @db.VarChar(80)
+
+  @@unique([categoryId, locale])
+}
+
+model Product {
+  id            String    @id @default(cuid())
+  slug          String    @unique @db.VarChar(120)
+  priceHalalas  Int /// CHECK (> 0) is enforced in the migration
+  categoryId    String
+  category      Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  inStock       Boolean   @default(true)
+  /// Offered to cafés through the B2B tasting request form.
+  isTastingMenu Boolean   @default(false)
+  isFeatured    Boolean   @default(false)
+  sortOrder     Int       @default(0)
+  /// Soft delete. Archived products are hidden everywhere except history.
+  archivedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  translations ProductTranslation[]
+  images       ProductImage[]
+  orderItems   OrderItem[]
+  tastingItems TastingRequestItem[]
+
+  @@index([categoryId])
+  @@index([archivedAt, inStock])
+  @@index([archivedAt, isTastingMenu])
+}
+
+model ProductTranslation {
+  id          String  @id @default(cuid())
+  productId   String
+  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  locale      Locale
+  title       String  @db.VarChar(120)
+  description String  @db.VarChar(1000)
+  badge       String? @db.VarChar(32) /// e.g. "Signature", "جديد"
+
+  @@unique([productId, locale])
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  /// Must match an allowed host in next.config images.remotePatterns.
+  url       String  @db.VarChar(500)
+  altAr     String? @db.VarChar(160)
+  altEn     String? @db.VarChar(160)
+  position  Int     @default(0)
+
+  @@index([productId, position])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Retail orders (B2C)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Order {
+  id          String @id @default(cuid())
+  /// Human-friendly reference shown to customers and staff ("ORD-1042").
+  orderNumber Int    @unique @default(autoincrement())
+
+  status        OrderStatus       @default(PENDING)
+  fulfillment   FulfillmentMethod
+  paymentMethod PaymentMethod
+  paymentStatus PaymentStatus     @default(UNPAID)
+
+  // Customer details (guest checkout supported; userId set when signed in)
+  userId          String?
+  user            User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  customerName    String  @db.VarChar(100)
+  customerPhone   String  @db.VarChar(20) /// E.164, e.g. +966551234567
+  customerEmail   String? @db.VarChar(254)
+  deliveryAddress String? @db.VarChar(500)
+  notes           String? @db.VarChar(500)
+  locale          Locale  @default(ar)
+
+  // Totals are always computed server-side from current DB prices.
+  subtotalHalalas    Int
+  deliveryFeeHalalas Int @default(0)
+  vatHalalas         Int
+  totalHalalas       Int
+
+  items OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([createdAt])
+  @@index([customerPhone])
+}
+
+model OrderItem {
+  id               String   @id @default(cuid())
+  orderId          String
+  order            Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId        String?
+  product          Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  titleSnapshot    String   @db.VarChar(120)
+  unitPriceHalalas Int
+  quantity         Int /// CHECK (1..50) is enforced in the migration
+  lineTotalHalalas Int
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Café tasting requests (B2B) — "طلب تجربة للكافيه"
+// ─────────────────────────────────────────────────────────────────────────────
+
+model TastingRequest {
+  id            String               @id @default(cuid())
+  requestNumber Int                  @unique @default(autoincrement())
+  status        TastingRequestStatus @default(NEW)
+
+  cafeName    String  @db.VarChar(100)
+  contactName String? @db.VarChar(100)
+  phone       String  @db.VarChar(20) /// E.164
+  email       String? @db.VarChar(254)
+  city        String? @db.VarChar(60)
+  notes       String? @db.VarChar(500)
+  locale      Locale  @default(ar)
+
+  /// Internal follow-up notes, never shown to the café.
+  staffNotes String? @db.VarChar(1000)
+  /// Salted SHA-256 of the submitter IP, for abuse investigation only.
+  ipHash     String? @db.VarChar(64)
+
+  selectedProducts TastingRequestItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([phone])
+}
+
+/// Explicit join table so each selection keeps a title snapshot.
+model TastingRequestItem {
+  tastingRequestId String
+  tastingRequest   TastingRequest @relation(fields: [tastingRequestId], references: [id], onDelete: Cascade)
+  productId        String
+  product          Product        @relation(fields: [productId], references: [id], onDelete: Restrict)
+  titleSnapshot    String         @db.VarChar(120)
+
+  @@id([tastingRequestId, productId])
+  @@index([productId])
+}
