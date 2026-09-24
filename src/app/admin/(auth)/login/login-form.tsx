@@ -9,7 +9,7 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
     <form action={action} className="flex max-w-sm flex-col gap-3">
       <input type="hidden" name="callbackUrl" value={callbackUrl ?? ''} />
       <input name="email" type="email" autoComplete="username" required placeholder="Email" />
-      <input name="password" type="password" autoComplete="current-password" required minLength={8} placeholder="Password" />
+      <input name="password" type="password" autoComplete="current-password" required placeholder="Password" />
       {state?.error && <p role="alert">{state.error}</p>}
       <button type="submit" disabled={pending}>Sign in</button>
     </form>

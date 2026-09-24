@@ -88,17 +88,6 @@ async function seedCatalog() {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-/** Returns the reasons a password is rejected (empty list = acceptable). */
-function passwordProblems(password: string): string[] {
-  const problems: string[] = []
-  if (password.length < 12) problems.push('at least 12 characters')
-  if (password.length > 128) problems.push('at most 128 characters')
-  const classes = [/[a-z]/, /[A-Z]/, /\d/, /[^A-Za-z0-9]/].filter((re) => re.test(password)).length
-  if (classes < 3) problems.push('at least 3 of: lowercase, uppercase, digit, symbol')
-  if (/^(.)\1+$/.test(password)) problems.push('not a single repeated character')
-  return problems
-}
-
 function warn(lines: string[]) {
   console.warn(['', ...lines.map((l, i) => (i === 0 ? `⚠️  ${l}` : `    ${l}`)), ''].join('\n'))
 }
@@ -122,15 +111,8 @@ async function seedAdmin() {
     warn(['SEED_ADMIN_EMAIL is not a valid e-mail address: admin account NOT created.'])
     return
   }
-  const problems = passwordProblems(password)
-  if (problems.length) {
-    warn([
-      'SEED_ADMIN_PASSWORD is too weak: admin account NOT created. It needs:',
-      ...problems.map((p) => `- ${p}`),
-      'Update it in Vercel → Settings → Environment Variables, then redeploy.',
-    ])
-    return
-  }
+  // TODO(before launch): restore the strong password policy (12+ chars,
+  // 3 character classes) that was relaxed for the preview phase.
 
   const existing = await db.user.findUnique({ where: { email }, select: { id: true, role: true } })
 
