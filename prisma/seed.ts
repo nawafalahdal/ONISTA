@@ -90,7 +90,13 @@ async function seedAdmin() {
   const email = process.env.SEED_ADMIN_EMAIL?.toLowerCase()
   const password = process.env.SEED_ADMIN_PASSWORD
   if (email && password) {
-    if (password.length < 12) throw new Error('SEED_ADMIN_PASSWORD must be at least 12 characters')
+    if (password.length < 12) {
+      // Don't block the whole deploy; the storefront still ships. The admin
+      // account is created on the next deploy after the password is fixed.
+      console.warn('\n⚠️  SEED_ADMIN_PASSWORD is shorter than 12 characters: admin account NOT created.')
+      console.warn('    Update it in Vercel → Settings → Environment Variables, then redeploy.\n')
+      return
+    }
     await db.user.upsert({
       where: { email },
       update: {},
