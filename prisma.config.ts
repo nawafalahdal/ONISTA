@@ -7,9 +7,12 @@ export default defineConfig({
     path: 'prisma/migrations',
     seed: 'tsx prisma/seed.ts',
   },
-  // Read lazily: `prisma generate` (run on every `npm install`) must work
-  // without a database URL; migrate/seed fail clearly if it is missing.
+  // Used by the CLI only (migrate, seed, studio). Migrations take a Postgres
+  // advisory lock, which is unreliable through a connection pooler, so prefer
+  // the direct connection Neon exposes as DATABASE_URL_UNPOOLED. The app
+  // itself keeps using the pooled DATABASE_URL (src/server/db.ts).
+  // Read lazily: `prisma generate` (run on every install) needs no URL.
   datasource: {
-    url: process.env.DATABASE_URL ?? '',
+    url: process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL || '',
   },
 })
