@@ -15,10 +15,12 @@ export const RATE_LIMITS = {
    *  validation); per phone counts only valid submissions. */
   tastingRequest: { limit: 10, windowSeconds: 60 * 60 },
   tastingRequestPhone: { limit: 2, windowSeconds: 24 * 60 * 60 },
-  /** Public checkout, per IP. */
-  placeOrder: { limit: 10, windowSeconds: 60 * 60 },
   /** Authenticated staff mutations, per user. */
   adminMutation: { limit: 120, windowSeconds: 60 },
+  /** Authenticated café self-service mutations (orders, addresses), per user. */
+  cafeMutation: { limit: 60, windowSeconds: 60 },
+  /** Placing an order (one-off or weekly schedule), per café. */
+  placeOrder: { limit: 20, windowSeconds: 60 * 60 },
 } satisfies Record<string, Policy>
 
 export type RateLimitPolicy = keyof typeof RATE_LIMITS

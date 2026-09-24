@@ -3,8 +3,8 @@ import NextAuth, { CredentialsSignin } from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import { authConfig } from './config'
 import { verifyPassword } from './password'
-import { isStaffRole } from '@/config/security'
 import { loginSchema } from '@/lib/validation/auth'
+import { phone as phoneSchema } from '@/lib/validation/common'
 import { db } from '@/server/db'
 import { rateLimit } from '@/server/security/rate-limit'
 import { getClientIp } from '@/server/security/request'
@@ -19,37 +19,46 @@ class RateLimited extends CredentialsSignin {
   code = 'rate_limited'
 }
 
+/** Admin/staff sign in with an e-mail; café accounts sign in with a phone number. */
+function normalizeIdentifier(identifier: string): { email: string } | { phone: string } | null {
+  const trimmed = identifier.trim()
+  if (trimmed.includes('@')) return { email: trimmed.toLowerCase() }
+  const parsed = phoneSchema.safeParse(trimmed)
+  return parsed.success ? { phone: parsed.data } : null
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   providers: [
     Credentials({
-      credentials: { email: {}, password: {} },
+      credentials: { identifier: {}, password: {} },
       async authorize(raw) {
         const parsed = loginSchema.safeParse(raw)
         if (!parsed.success) throw new InvalidCredentials()
-        const { email, password } = parsed.data
+        const { identifier, password } = parsed.data
+        const where = normalizeIdentifier(identifier)
 
         const ip = await getClientIp()
         const [perAccount, perIp] = await Promise.all([
-          rateLimit('login', `${ip}:${email}`),
+          rateLimit('login', `${ip}:${identifier.toLowerCase()}`),
           rateLimit('loginIp', ip),
         ])
         if (!perAccount.success || !perIp.success) throw new RateLimited()
 
-        const user = await db.user.findUnique({
-          where: { email },
-          select: {
-            id: true, email: true, name: true, role: true, isActive: true,
-            passwordHash: true, sessionVersion: true, lockedUntil: true,
-          },
-        })
+        const user = where
+          ? await db.user.findUnique({
+              where,
+              select: {
+                id: true, email: true, phone: true, name: true, role: true, isActive: true,
+                passwordHash: true, sessionVersion: true, mustChangePassword: true, lockedUntil: true,
+              },
+            })
+          : null
 
         // Always run bcrypt, even for unknown users, to keep timing uniform.
         const passwordOk = await verifyPassword(password, user?.passwordHash)
 
-        // Only staff accounts may sign in here; customers get the same generic
-        // error so the admin login cannot be used to probe customer accounts.
-        if (!user || !user.isActive || !isStaffRole(user.role)) throw new InvalidCredentials()
+        if (!user || !user.isActive) throw new InvalidCredentials()
         if (user.lockedUntil && user.lockedUntil > new Date()) throw new RateLimited()
 
         if (!passwordOk) {
@@ -78,6 +87,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.name,
           role: user.role,
           sessionVersion: user.sessionVersion,
+          mustChangePassword: user.mustChangePassword,
         }
       },
     }),

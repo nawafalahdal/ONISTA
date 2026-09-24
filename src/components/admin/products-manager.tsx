@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast'
 import { halalasToSar } from '@/lib/money'
 import { PageHeader, Panel, Tabs, Toggle } from './ui'
 
-type Filter = 'all' | 'tasting' | 'hidden'
+type Filter = 'all' | 'schedulable' | 'tasting' | 'hidden'
 type Editing = AdminProduct | 'new' | null
 
 export default function ProductsManager({ products, categories }: { products: AdminProduct[]; categories: AdminCategory[] }) {
@@ -24,7 +24,12 @@ export default function ProductsManager({ products, categories }: { products: Ad
   const [editing, setEditing] = useState<Editing>(null)
   const [filter, setFilter] = useState<Filter>('all')
 
-  const rows = products.filter((p) => filter === 'all' || (filter === 'tasting' ? p.isTastingMenu : !p.inStock))
+  const rows = products.filter((p) => {
+    if (filter === 'schedulable') return p.isSchedulable
+    if (filter === 'tasting') return p.isTastingMenu
+    if (filter === 'hidden') return !p.inStock
+    return true
+  })
   const nameOf = (p: AdminProduct) => p.translations.en.title || p.translations.ar.title
 
   return (
@@ -43,23 +48,25 @@ export default function ProductsManager({ products, categories }: { products: Ad
             onChange={setFilter}
             tabs={[
               { id: 'all', label: t('all'), count: products.length },
+              { id: 'schedulable', label: t('schedulableMenu'), count: products.filter((p) => p.isSchedulable).length },
               { id: 'tasting', label: t('tastingMenu'), count: products.filter((p) => p.isTastingMenu).length },
               { id: 'hidden', label: t('unavailable'), count: products.filter((p) => !p.inStock).length },
             ]}
           />
           <p className="flex items-center gap-1.5 text-xs text-muted">
-            <Coffee size={13} className="text-rose-500" /> {t('tastingHint')}
+            <Coffee size={13} className="text-rose-500" /> {t('schedulableHint')}
           </p>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[840px] text-sm">
+          <table className="w-full min-w-[900px] text-sm">
             <thead className="text-[11px] tracking-[0.12em] text-muted uppercase">
               <tr className="border-b border-line">
                 <th className="px-5 py-3 text-start font-medium">{t('colProduct')}</th>
                 <th className="px-5 py-3 text-start font-medium">{t('colCategory')}</th>
                 <th className="px-5 py-3 text-start font-medium">{t('colPrice')}</th>
                 <th className="px-5 py-3 text-center font-medium">{t('colInStock')}</th>
+                <th className="px-5 py-3 text-center font-medium">{t('colSchedulable')}</th>
                 <th className="px-5 py-3 text-center font-medium">{t('colTasting')}</th>
                 <th className="px-5 py-3" />
               </tr>
@@ -95,6 +102,14 @@ export default function ProductsManager({ products, categories }: { products: Ad
                         checked={p.inStock}
                         disabled={pending}
                         onChange={(value) => run(() => setProductFlag({ id: p.id, flag: 'inStock', value }), t('saved', { name: nameOf(p) }))}
+                      />
+                    </td>
+                    <td className="px-5 py-3 text-center">
+                      <Toggle
+                        label={`${nameOf(p)} · ${t('colSchedulable')}`}
+                        checked={p.isSchedulable}
+                        disabled={pending}
+                        onChange={(value) => run(() => setProductFlag({ id: p.id, flag: 'isSchedulable', value }), t('saved', { name: nameOf(p) }))}
                       />
                     </td>
                     <td className="px-5 py-3 text-center">
@@ -233,6 +248,7 @@ function ProductForm({
     categoryId: initial?.categoryId ?? categories[0]?.id ?? '',
     image: initial?.images[0]?.url ?? '',
     inStock: initial?.inStock ?? true,
+    isSchedulable: initial?.isSchedulable ?? true,
     isTastingMenu: initial?.isTastingMenu ?? false,
   })
   const [slugTouched, setSlugTouched] = useState(!isNew)
@@ -258,6 +274,7 @@ function ProductForm({
       categoryId: f.categoryId,
       priceHalalas: f.price, // entered in SAR; the schema converts to halalas
       inStock: f.inStock,
+      isSchedulable: f.isSchedulable,
       isTastingMenu: f.isTastingMenu,
       isFeatured: initial?.isFeatured ?? false,
       sortOrder: initial?.sortOrder ?? 0,
@@ -350,6 +367,12 @@ function ProductForm({
             text={t('availableInStoreHint')}
             checked={f.inStock}
             onChange={(inStock) => setF((p) => ({ ...p, inStock }))}
+          />
+          <SwitchRow
+            title={t('includeSchedulable')}
+            text={t('includeSchedulableHint')}
+            checked={f.isSchedulable}
+            onChange={(isSchedulable) => setF((p) => ({ ...p, isSchedulable }))}
           />
           <SwitchRow
             title={t('includeTasting')}

@@ -39,6 +39,7 @@ export const productInputSchema = z.object({
   priceHalalas: price,
   inStock: checkbox,
   isTastingMenu: checkbox,
+  isSchedulable: checkbox,
   isFeatured: checkbox,
   sortOrder: z.coerce.number().int().min(0).max(10_000).default(0),
   translations: z.object({ ar: translation, en: translation }),
@@ -50,7 +51,7 @@ export const updateProductSchema = productInputSchema.extend({ id })
 
 export const productFlagSchema = z.object({
   id,
-  flag: z.enum(['inStock', 'isTastingMenu', 'isFeatured']),
+  flag: z.enum(['inStock', 'isTastingMenu', 'isSchedulable', 'isFeatured']),
   value: z.boolean(),
 })
 

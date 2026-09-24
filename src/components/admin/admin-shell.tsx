@@ -4,7 +4,7 @@ import { useTransition, type ReactNode } from 'react'
 import NextLink from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Cake, ClipboardList, Coffee, ExternalLink, Languages, LayoutDashboard, LogOut } from 'lucide-react'
+import { Building2, Cake, ClipboardList, Coffee, ExternalLink, Languages, LayoutDashboard, LogOut, Settings } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { LogoMark, Wordmark } from '@/components/ui/logo'
 import ThemeToggle from '@/components/ui/theme-toggle'
@@ -16,7 +16,7 @@ export default function AdminShell({
   counts,
   children,
 }: {
-  user: { email: string; role: string }
+  user: { email: string | null; role: string }
   counts: { newOrders: number; newRequests: number }
   children: ReactNode
 }) {
@@ -31,6 +31,8 @@ export default function AdminShell({
     { href: '/admin/orders', label: t('orders'), icon: ClipboardList, badge: counts.newOrders },
     { href: '/admin/tasting-requests', label: t('tasting'), icon: Coffee, badge: counts.newRequests },
     { href: '/admin/products', label: t('products'), icon: Cake },
+    { href: '/admin/clients', label: t('clients'), icon: Building2 },
+    { href: '/admin/settings', label: t('settings'), icon: Settings },
   ]
   const isActive = (href: string) => (href === '/admin' ? pathname === href : pathname.startsWith(href))
 
@@ -101,7 +103,7 @@ export default function AdminShell({
           </NextLink>
           <div className="rounded-xl border border-line p-3">
             <p className="truncate text-xs text-cream" dir="ltr">
-              {user.email}
+              {user.email ?? ''}
             </p>
             <p className="text-[10px] tracking-[0.2em] text-muted uppercase">{user.role}</p>
             <form action={logout} className="mt-2">

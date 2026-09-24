@@ -5,59 +5,41 @@ import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'framer-
 import { Coffee } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import type { CatalogProduct } from '@/server/queries/catalog'
-import Toast from '@/components/ui/toast'
-import { useToast } from '@/hooks/use-toast'
-import { CartProvider } from './cart-provider'
-import CartDrawer from './cart-drawer'
-import CheckoutModal from './checkout-modal'
-import Footer from './footer'
-import HeroAbout from './hero-about'
 import Navbar from './navbar'
+import HeroAbout from './hero-about'
 import ProductsCatalog from './products-catalog'
-import TastingModal from './tasting-modal'
 import TastingSection from './tasting-section'
+import TastingModal from './tasting-modal'
+import Footer from './footer'
 
-/** Client shell for the storefront: owns overlay state and the cart. */
-export default function Storefront({ products }: { products: CatalogProduct[] }) {
-  const [cartOpen, setCartOpen] = useState(false)
-  const [checkoutOpen, setCheckoutOpen] = useState(false)
+/**
+ * Client shell for the (showcase-only) storefront. There is no cart or guest
+ * checkout here: purchasing — one-off or a weekly schedule — happens in the
+ * café partner portal (/account) after signing in. This page's only
+ * transactional action is the public tasting-request lead form.
+ */
+export default function Storefront({ products, cutoffHour }: { products: CatalogProduct[]; cutoffHour: number }) {
   const [tastingOpen, setTastingOpen] = useState(false)
-  const { toast, notify } = useToast()
-  const t = useTranslations('Catalog')
-
   const tastingMenu = products.filter((p) => p.isTastingMenu && p.inStock)
   const scrollToCollection = () => document.getElementById('collection')?.scrollIntoView({ behavior: 'smooth' })
 
   return (
-    <CartProvider products={products}>
-      <div id="top">
-        <Navbar onCart={() => setCartOpen(true)} />
-        <main>
-          <HeroAbout onShop={scrollToCollection} onTasting={() => setTastingOpen(true)} />
-          <ProductsCatalog products={products} onAdded={(p) => notify(t('toastAdded', { name: p.title }))} />
-          <TastingSection menu={tastingMenu} onOpen={() => setTastingOpen(true)} />
-        </main>
-        <Footer />
+    <div id="top">
+      <Navbar />
+      <main>
+        <HeroAbout onShop={scrollToCollection} onTasting={() => setTastingOpen(true)} />
+        <ProductsCatalog products={products} />
+        <TastingSection menu={tastingMenu} onOpen={() => setTastingOpen(true)} />
+      </main>
+      <Footer cutoffHour={cutoffHour} />
 
-        <TastingFab onClick={() => setTastingOpen(true)} hidden={tastingOpen || cartOpen || checkoutOpen} />
-
-        <CartDrawer
-          open={cartOpen}
-          onClose={() => setCartOpen(false)}
-          onCheckout={() => {
-            setCartOpen(false)
-            setCheckoutOpen(true)
-          }}
-        />
-        <CheckoutModal open={checkoutOpen} onClose={() => setCheckoutOpen(false)} />
-        <TastingModal open={tastingOpen} onClose={() => setTastingOpen(false)} menu={tastingMenu} />
-        <Toast message={toast} />
-      </div>
-    </CartProvider>
+      <TastingFab onClick={() => setTastingOpen(true)} hidden={tastingOpen} />
+      <TastingModal open={tastingOpen} onClose={() => setTastingOpen(false)} menu={tastingMenu} />
+    </div>
   )
 }
 
-/** Floating B2B entry point, revealed once the visitor leaves the hero. */
+/** Floating lead-gen entry point, revealed once the visitor leaves the hero. */
 function TastingFab({ onClick, hidden }: { onClick: () => void; hidden: boolean }) {
   const t = useTranslations('Tasting')
   const { scrollY } = useScroll()

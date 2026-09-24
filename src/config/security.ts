@@ -7,30 +7,39 @@ export const IMAGE_HOSTS = ['images.unsplash.com', 'res.cloudinary.com'] as cons
 export const ADMIN_PATH = '/admin'
 export const ADMIN_LOGIN_PATH = '/admin/login'
 
+/** The café partner portal: logged-in B2B clients only, no public sign-up. */
+export const ACCOUNT_PATH = '/account'
+export const ACCOUNT_LOGIN_PATH = '/account/login'
+export const ACCOUNT_CHANGE_PASSWORD_PATH = '/account/change-password'
+
 export const STAFF_ROLES = ['STAFF', 'ADMIN'] as const
-export type AppRole = 'CUSTOMER' | 'STAFF' | 'ADMIN'
+export type AppRole = 'ADMIN' | 'STAFF' | 'CAFE'
 
 export const isStaffRole = (role: unknown): role is (typeof STAFF_ROLES)[number] =>
   role === 'STAFF' || role === 'ADMIN'
 
-export const isAdminPath = (pathname: string) =>
-  pathname === ADMIN_PATH || pathname.startsWith(`${ADMIN_PATH}/`)
+export const isCafeRole = (role: unknown): role is 'CAFE' => role === 'CAFE'
 
-/**
- * Only allow redirects back into the admin area. Blocks open redirects such as
- * `?callbackUrl=https://evil.tld` or protocol-relative `//evil.tld`.
- */
-export function safeAdminRedirect(target: unknown, fallback = ADMIN_PATH): string {
-  if (typeof target !== 'string' || !target.startsWith('/') || target.startsWith('//') || target.includes('\\')) {
-    return fallback
-  }
-  try {
-    const url = new URL(target, 'http://localhost')
-    if (url.origin !== 'http://localhost' || !isAdminPath(url.pathname) || url.pathname === ADMIN_LOGIN_PATH) {
+export const isAdminPath = (pathname: string) => pathname === ADMIN_PATH || pathname.startsWith(`${ADMIN_PATH}/`)
+export const isAccountPath = (pathname: string) => pathname === ACCOUNT_PATH || pathname.startsWith(`${ACCOUNT_PATH}/`)
+
+/** Builds a redirect-target validator scoped to one area (admin or account). */
+function safeRedirectWithin(base: string, loginPath: string, isInArea: (p: string) => boolean) {
+  return (target: unknown, fallback = base): string => {
+    if (typeof target !== 'string' || !target.startsWith('/') || target.startsWith('//') || target.includes('\\')) {
       return fallback
     }
-    return url.pathname + url.search
-  } catch {
-    return fallback
+    try {
+      const url = new URL(target, 'http://localhost')
+      if (url.origin !== 'http://localhost' || !isInArea(url.pathname) || url.pathname === loginPath) return fallback
+      return url.pathname + url.search
+    } catch {
+      return fallback
+    }
   }
 }
+
+/** Only allow redirects back into /admin. Blocks open redirects. */
+export const safeAdminRedirect = safeRedirectWithin(ADMIN_PATH, ADMIN_LOGIN_PATH, isAdminPath)
+/** Only allow redirects back into /account. Blocks open redirects. */
+export const safeAccountRedirect = safeRedirectWithin(ACCOUNT_PATH, ACCOUNT_LOGIN_PATH, isAccountPath)

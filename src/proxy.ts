@@ -2,7 +2,14 @@ import NextAuth from 'next-auth'
 import createIntlMiddleware from 'next-intl/middleware'
 import { NextResponse } from 'next/server'
 import { authConfig } from '@/auth/config'
-import { ADMIN_LOGIN_PATH, isAdminPath, isStaffRole } from '@/config/security'
+import {
+  ACCOUNT_LOGIN_PATH,
+  ADMIN_LOGIN_PATH,
+  isAccountPath,
+  isAdminPath,
+  isCafeRole,
+  isStaffRole,
+} from '@/config/security'
 import { routing } from '@/i18n/routing'
 
 /**
@@ -10,15 +17,50 @@ import { routing } from '@/i18n/routing'
  *
  * Responsibilities
  * 1. Locale negotiation/redirects for the storefront (next-intl).
- * 2. OPTIMISTIC gatekeeping for /admin using only the encrypted session
- *    cookie (no database access, per Next.js guidance). The authoritative
- *    check is repeated in the Data Access Layer by every admin layout,
- *    page, query and Server Action, so a proxy bypass grants nothing.
+ * 2. OPTIMISTIC gatekeeping for /admin and /account using only the encrypted
+ *    session cookie (no database access, per Next.js guidance). The
+ *    authoritative check is repeated in the Data Access Layer by every
+ *    layout, page, query and Server Action in each area, so a proxy bypass
+ *    grants nothing — it only decides which login page to bounce to.
  * 3. Rejecting Server Action POSTs that carry no Origin header (Next.js
  *    only warns on those; we fail closed).
  */
 const { auth } = NextAuth(authConfig)
 const handleI18n = createIntlMiddleware(routing)
+
+/** Optimistic gate shared by /admin (staff) and /account (café), which never overlap. */
+function gateArea(
+  pathname: string,
+  search: string,
+  url: string,
+  role: unknown,
+  isAuthed: boolean,
+  loginPath: string,
+  isAllowedRole: (role: unknown) => boolean,
+): NextResponse {
+  let res: NextResponse
+
+  if (pathname === loginPath) {
+    // No "already signed in → area home" bounce here: a revoked-but-unexpired
+    // JWT would loop between login and the DAL. The login page decides that
+    // with the authoritative database check instead.
+    res = NextResponse.next()
+  } else if (!isAuthed) {
+    const login = new URL(loginPath, url)
+    login.searchParams.set('callbackUrl', pathname + search)
+    res = NextResponse.redirect(login)
+  } else if (!isAllowedRole(role)) {
+    // Signed-in but the wrong kind of account: this area does not
+    // acknowledge that it exists to them.
+    res = new NextResponse('Not Found', { status: 404 })
+  } else {
+    res = NextResponse.next()
+  }
+
+  res.headers.set('Cache-Control', 'private, no-store')
+  res.headers.set('X-Robots-Tag', 'noindex, nofollow')
+  return res
+}
 
 export default auth((req) => {
   const { pathname, search } = req.nextUrl
@@ -27,32 +69,12 @@ export default auth((req) => {
     return new NextResponse(null, { status: 403 })
   }
 
-  if (!isAdminPath(pathname)) return handleI18n(req)
+  const isAuthed = Boolean(req.auth)
+  const role = req.auth?.user?.role
 
-  const isStaff = isStaffRole(req.auth?.user?.role)
-  let res: NextResponse
-
-  if (pathname === ADMIN_LOGIN_PATH) {
-    // No "already signed in → /admin" bounce here: a revoked-but-unexpired
-    // JWT would loop between login and the DAL. The login page decides that
-    // with the authoritative database check instead.
-    res = NextResponse.next()
-  } else if (!req.auth) {
-    const login = new URL(ADMIN_LOGIN_PATH, req.url)
-    login.searchParams.set('callbackUrl', pathname + search)
-    res = NextResponse.redirect(login)
-  } else if (!isStaff) {
-    // Signed-in customers get a plain 404: the admin area does not
-    // acknowledge that it exists.
-    res = new NextResponse('Not Found', { status: 404 })
-  } else {
-    res = NextResponse.next()
-  }
-
-  // Admin responses must never be cached by shared caches or indexed.
-  res.headers.set('Cache-Control', 'private, no-store')
-  res.headers.set('X-Robots-Tag', 'noindex, nofollow')
-  return res
+  if (isAdminPath(pathname)) return gateArea(pathname, search, req.url, role, isAuthed, ADMIN_LOGIN_PATH, isStaffRole)
+  if (isAccountPath(pathname)) return gateArea(pathname, search, req.url, role, isAuthed, ACCOUNT_LOGIN_PATH, isCafeRole)
+  return handleI18n(req)
 })
 
 export const config = {

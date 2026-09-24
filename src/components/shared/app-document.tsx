@@ -6,8 +6,12 @@ import { localeDirection, type AppLocale } from '@/i18n/routing'
 import { fontVariables } from '@/styles/fonts'
 import '@/styles/globals.css'
 
-/** <html> shell shared by the two admin root layouts (auth and dashboard). */
-export async function AdminDocument({ children }: { children: ReactNode }) {
+/**
+ * <html> shell shared by every non-locale-prefixed area (admin back office,
+ * café partner portal). Locale comes from the NEXT_LOCALE cookie, since
+ * these areas have no /ar, /en URL segment.
+ */
+export async function AppDocument({ children }: { children: ReactNode }) {
   const locale = (await getLocale()) as AppLocale
   return (
     <html lang={locale} dir={localeDirection(locale)} className={fontVariables} suppressHydrationWarning>
@@ -18,10 +22,4 @@ export async function AdminDocument({ children }: { children: ReactNode }) {
       </body>
     </html>
   )
-}
-
-export const adminMetadata = {
-  title: 'Onista · Back office',
-  robots: { index: false, follow: false },
-  icons: { icon: '/favicon.svg' },
 }

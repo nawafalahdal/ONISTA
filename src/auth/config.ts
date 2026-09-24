@@ -23,6 +23,7 @@ export const authConfig = {
         token.uid = user.id as string
         token.role = user.role
         token.sv = user.sessionVersion
+        token.mcp = user.mustChangePassword
       }
       return token
     },
@@ -30,6 +31,7 @@ export const authConfig = {
       session.user.id = token.uid
       session.user.role = token.role
       session.user.sessionVersion = token.sv
+      session.user.mustChangePassword = token.mcp
       return session
     },
   },

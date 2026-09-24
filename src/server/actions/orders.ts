@@ -1,69 +1,70 @@
 'use server'
 
 import { fail, ok, type ActionResult } from '@/lib/action-result'
-import { computeTotals } from '@/lib/pricing'
 import { fieldErrors } from '@/lib/validation/common'
-import { orderStatusSchema, placeOrderSchema } from '@/lib/validation/order'
+import { deliveryStatusSchema, oneOffOrderSchema, orderStatusSchema, weeklyScheduleSchema } from '@/lib/validation/order'
 import { db } from '@/server/db'
-import { guardStaffAction } from '@/server/dal/guard'
+import { guardCafeAction, guardStaffAction } from '@/server/dal/guard'
+import { buildOrder, type BuildOrderError } from '@/server/order-builder'
 import { audit } from '@/server/security/audit'
 import { rateLimit } from '@/server/security/rate-limit'
-import { getClientIp } from '@/server/security/request'
 
-/**
- * PUBLIC checkout. Prices and totals are computed here from the database;
- * the client only sends product IDs and quantities.
- */
-export async function placeOrder(input: unknown): Promise<ActionResult<{ orderNumber: number }>> {
-  const ip = await getClientIp()
-  if (!(await rateLimit('placeOrder', ip)).success) return fail('rateLimited')
+export type SubmitOrderResult = ActionResult<{ orderNumber: number }>
 
-  const parsed = placeOrderSchema.safeParse(input)
-  if (!parsed.success) return fail('validation', fieldErrors(parsed.error))
-  const { items, locale, deliveryAddress, ...customer } = parsed.data
-
-  // Merge duplicate lines, then load current prices for purchasable products.
-  const quantities = new Map<string, number>()
-  for (const { productId, quantity } of items) quantities.set(productId, (quantities.get(productId) ?? 0) + quantity)
-  if ([...quantities.values()].some((q) => q > 50)) return fail('validation', { items: ['invalid'] })
-
-  const products = await db.product.findMany({
-    where: { id: { in: [...quantities.keys()] }, archivedAt: null, inStock: true },
-    select: { id: true, priceHalalas: true, translations: { where: { locale }, select: { title: true } } },
-  })
-  if (products.length !== quantities.size || products.some((p) => !p.translations[0])) {
-    return fail('unavailableSamples', { items: ['unavailableItems'] })
-  }
-
-  const lines = products.map((p) => {
-    const quantity = quantities.get(p.id)!
-    return {
-      productId: p.id,
-      titleSnapshot: p.translations[0]!.title,
-      unitPriceHalalas: p.priceHalalas,
-      quantity,
-      lineTotalHalalas: p.priceHalalas * quantity,
-    }
-  })
-  const totals = computeTotals(
-    lines.reduce((sum, l) => sum + l.lineTotalHalalas, 0),
-    customer.fulfillment,
-  )
-
-  const order = await db.order.create({
-    data: {
-      ...customer,
-      deliveryAddress: customer.fulfillment === 'DELIVERY' ? deliveryAddress : null,
-      locale,
-      ...totals,
-      items: { create: lines },
-    },
-    select: { orderNumber: true },
-  })
-  return ok(order)
+function mapBuildError(error: BuildOrderError) {
+  if (error.code === 'addressNotFound') return fail('notFound', { addressId: ['notFound'] })
+  if (error.code === 'invalidDate') return fail('validation', { days: ['invalidDate'] })
+  return fail('unavailableSamples', { days: ['unavailableItems'] })
 }
 
-/** STAFF: move an order through its lifecycle. */
+/** Café-only: a single-date order. Requires being logged in — no guest checkout. */
+export async function submitOneOffOrder(input: unknown): Promise<SubmitOrderResult> {
+  const { user, denied } = await guardCafeAction()
+  if (denied) return denied
+  if (!(await rateLimit('placeOrder', user.cafeId)).success) return fail('rateLimited')
+
+  const parsed = oneOffOrderSchema.safeParse(input)
+  if (!parsed.success) return fail('validation', fieldErrors(parsed.error))
+  const { deliveryDate, addressId, items, ...rest } = parsed.data
+
+  const result = await buildOrder({
+    cafeId: user.cafeId,
+    type: 'ONE_OFF',
+    addressId,
+    days: [{ deliveryDate, items }],
+    ...rest,
+  })
+  if (!result.ok) return mapBuildError(result.error)
+
+  await audit({ actorId: user.id, action: 'order.create', entityType: 'Order', entityId: result.orderId, metadata: { type: 'ONE_OFF' } })
+  return ok({ orderNumber: result.orderNumber })
+}
+
+/** Café-only: the weekly delivery schedule, paid in full for the whole week. */
+export async function submitWeeklySchedule(input: unknown): Promise<SubmitOrderResult> {
+  const { user, denied } = await guardCafeAction()
+  if (denied) return denied
+  if (!(await rateLimit('placeOrder', user.cafeId)).success) return fail('rateLimited')
+
+  const parsed = weeklyScheduleSchema.safeParse(input)
+  if (!parsed.success) return fail('validation', fieldErrors(parsed.error))
+  const { weekStartDate: _weekStartDate, addressId, days, ...rest } = parsed.data
+  void _weekStartDate // the week is anchored by the first delivery date, not a separate value
+
+  const result = await buildOrder({ cafeId: user.cafeId, type: 'WEEKLY_SCHEDULE', addressId, days, ...rest })
+  if (!result.ok) return mapBuildError(result.error)
+
+  await audit({
+    actorId: user.id,
+    action: 'order.create',
+    entityType: 'Order',
+    entityId: result.orderId,
+    metadata: { type: 'WEEKLY_SCHEDULE', days: days.length },
+  })
+  return ok({ orderNumber: result.orderNumber })
+}
+
+/** STAFF: order-level lifecycle (confirm / cancel / complete). */
 export async function updateOrderStatus(input: unknown): Promise<ActionResult<{ id: string }>> {
   const { user, denied } = await guardStaffAction()
   if (denied) return denied
@@ -76,5 +77,35 @@ export async function updateOrderStatus(input: unknown): Promise<ActionResult<{ 
   if (count === 0) return fail('notFound')
 
   await audit({ actorId: user.id, action: 'order.status', entityType: 'Order', entityId: id, metadata: { status } })
+  return ok({ id })
+}
+
+/** STAFF: day-by-day fulfilment of one delivery within an order. */
+export async function updateDeliveryStatus(input: unknown): Promise<ActionResult<{ id: string }>> {
+  const { user, denied } = await guardStaffAction()
+  if (denied) return denied
+
+  const parsed = deliveryStatusSchema.safeParse(input)
+  if (!parsed.success) return fail('validation', fieldErrors(parsed.error))
+  const { id, status } = parsed.data
+
+  const { count } = await db.delivery.updateMany({
+    where: { id },
+    data: { status, deliveredAt: status === 'DELIVERED' ? new Date() : undefined },
+  })
+  if (count === 0) return fail('notFound')
+
+  // If every delivery on the order is now DELIVERED, mark the order COMPLETED.
+  const delivery = await db.delivery.findUnique({ where: { id }, select: { orderId: true } })
+  if (delivery) {
+    const siblings = await db.delivery.findMany({ where: { orderId: delivery.orderId }, select: { status: true } })
+    if (siblings.every((s) => s.status === 'DELIVERED')) {
+      await db.order.updateMany({ where: { id: delivery.orderId, status: { not: 'CANCELLED' } }, data: { status: 'COMPLETED' } })
+    } else if (siblings.some((s) => s.status === 'OUT_FOR_DELIVERY' || s.status === 'DELIVERED' || s.status === 'PREPARING')) {
+      await db.order.updateMany({ where: { id: delivery.orderId, status: 'CONFIRMED' }, data: { status: 'IN_PROGRESS' } })
+    }
+  }
+
+  await audit({ actorId: user.id, action: 'delivery.status', entityType: 'Delivery', entityId: id, metadata: { status } })
   return ok({ id })
 }

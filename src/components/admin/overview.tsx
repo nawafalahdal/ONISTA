@@ -2,7 +2,7 @@
 
 import NextLink from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowUpRight, Cake, Coffee, ShoppingBag, Wallet } from 'lucide-react'
+import { ArrowUpRight, Building2, Cake, Coffee, Wallet } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import type { DashboardData } from '@/server/queries/admin'
 import { formatSar } from '@/lib/money'
@@ -16,9 +16,9 @@ export default function Overview({ data }: { data: DashboardData }) {
 
   const stats = [
     { label: t('revenue'), value: formatSar(data.revenueHalalas, locale), icon: Wallet, hint: t('ordersCount', { count: data.orderCount }) },
-    { label: t('openOrders'), value: data.openOrders, icon: ShoppingBag, hint: t('awaitingFulfilment'), href: '/admin/orders' },
+    { label: t('openOrders'), value: data.openOrders, icon: Cake, hint: t('awaitingFulfilment'), href: '/admin/orders' },
     { label: t('newRequests'), value: data.newRequests, icon: Coffee, hint: t('totalCount', { count: data.totalRequests }), href: '/admin/tasting-requests' },
-    { label: t('productsLive'), value: data.liveProducts, icon: Cake, hint: t('onTastingMenu', { count: data.tastingProducts }), href: '/admin/products' },
+    { label: t('cafeCount'), value: data.cafeCount, icon: Building2, hint: t('productsLive', { count: data.liveProducts }), href: '/admin/clients' },
   ]
   const maxQty = data.bestSellers[0]?.qty ?? 1
 
@@ -69,21 +69,19 @@ export default function Overview({ data }: { data: DashboardData }) {
               <li key={e.id} className="flex items-center gap-3 py-3">
                 <span
                   className={`grid h-9 w-9 place-items-center rounded-full ${
-                    e.kind === 'order' ? 'bg-rose-600/15 text-rose-600 dark:text-rose-300' : 'bg-amber-400/15 text-amber-700 dark:text-amber-300'
+                    e.kind === 'delivery' ? 'bg-rose-600/15 text-rose-600 dark:text-rose-300' : 'bg-amber-400/15 text-amber-700 dark:text-amber-300'
                   }`}
                 >
-                  {e.kind === 'order' ? <ShoppingBag size={15} /> : <Coffee size={15} />}
+                  {e.kind === 'delivery' ? <Cake size={15} /> : <Coffee size={15} />}
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm">{e.who}</p>
                   <p className="text-xs text-muted">
-                    {e.kind === 'order' ? t('retailOrder') : t('tastingRequest')} · <span dir="ltr">{e.ref}</span>
+                    {e.kind === 'delivery' ? t('retailOrder') : t('tastingRequest')} · <span dir="ltr">{e.ref}</span>
                   </p>
                 </div>
                 <div className="text-end">
-                  <p className="text-sm">
-                    {e.kind === 'order' ? formatSar(e.amountHalalas, locale) : t('samplesCount', { count: e.samples })}
-                  </p>
+                  <p className="text-sm">{e.kind === 'delivery' ? formatSar(e.amountHalalas, locale) : t('samplesCount', { count: e.samples })}</p>
                   <p className="text-xs text-muted">{when(e.at)}</p>
                 </div>
               </li>

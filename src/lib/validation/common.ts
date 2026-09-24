@@ -57,6 +57,9 @@ export const email = z.email({ error: MSG.invalidEmail }).max(254, { error: MSG.
 
 export const id = z.cuid({ error: MSG.invalid })
 
+/** A calendar date as 'YYYY-MM-DD', no time component. */
+export const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { error: MSG.invalid })
+
 export const localeSchema = z.enum(['ar', 'en'])
 
 /** HTML checkbox ("on") or JSON boolean. */

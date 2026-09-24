@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react'
 import type { Metadata } from 'next'
 import AdminShell from '@/components/admin/admin-shell'
-import { AdminDocument, adminMetadata } from '@/components/admin/admin-document'
+import { AppDocument } from '@/components/shared/app-document'
 import { requireStaffPage } from '@/server/dal/session'
 import { getNavCounts } from '@/server/queries/admin'
 
-export const metadata: Metadata = adminMetadata
+export const metadata: Metadata = { title: 'Onista · Back office', robots: { index: false, follow: false }, icons: { icon: '/favicon.svg' } }
 // Per-request by design (session + locale cookie): never prerendered.
 export const instant = false
 
@@ -19,10 +19,10 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   const user = await requireStaffPage()
   const counts = await getNavCounts()
   return (
-    <AdminDocument>
+    <AppDocument>
       <AdminShell user={{ email: user.email, role: user.role }} counts={counts}>
         {children}
       </AdminShell>
-    </AdminDocument>
+    </AppDocument>
   )
 }

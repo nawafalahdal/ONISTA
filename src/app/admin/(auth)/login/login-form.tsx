@@ -37,7 +37,7 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
         <input type="hidden" name="callbackUrl" value={callbackUrl ?? ''} />
         <label className="block">
           <span className="mb-1.5 block text-xs text-muted">{t('email')}</span>
-          <input className="field" name="email" type="email" dir="ltr" autoComplete="username" required />
+          <input className="field" name="identifier" type="email" dir="ltr" autoComplete="username" required />
         </label>
         <label className="block">
           <span className="mb-1.5 block text-xs text-muted">{t('password')}</span>

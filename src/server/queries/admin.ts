@@ -7,20 +7,20 @@ import { requireStaffPage } from '@/server/dal/session'
 // data cannot be reached even if a page forgets its own guard. Every function
 // returns a plain DTO: only the fields the admin UI actually renders.
 
-const OPEN_ORDER = { notIn: ['DELIVERED', 'CANCELLED'] as ('DELIVERED' | 'CANCELLED')[] }
+const OPEN_ORDER = { notIn: ['COMPLETED', 'CANCELLED'] as ('COMPLETED' | 'CANCELLED')[] }
 
 export async function getNavCounts() {
   await requireStaffPage()
-  const [newOrders, newRequests] = await Promise.all([
-    db.order.count({ where: { status: 'PENDING' } }),
+  const [pendingOrders, newRequests] = await Promise.all([
+    db.order.count({ where: { status: 'PENDING_PAYMENT' } }),
     db.tastingRequest.count({ where: { status: 'NEW' } }),
   ])
-  return { newOrders, newRequests }
+  return { newOrders: pendingOrders, newRequests }
 }
 
 export async function getDashboardData() {
   await requireStaffPage()
-  const [revenue, orderCount, openOrders, newRequests, totalRequests, liveProducts, tastingProducts, recentOrders, recentRequests, top] =
+  const [revenue, orderCount, openOrders, newRequests, totalRequests, liveProducts, cafeCount, upcomingDeliveries, recentRequests, top] =
     await Promise.all([
       db.order.aggregate({ where: { status: { not: 'CANCELLED' } }, _sum: { totalHalalas: true } }),
       db.order.count({ where: { status: { not: 'CANCELLED' } } }),
@@ -28,20 +28,24 @@ export async function getDashboardData() {
       db.tastingRequest.count({ where: { status: 'NEW' } }),
       db.tastingRequest.count(),
       db.product.count({ where: { archivedAt: null, inStock: true } }),
-      db.product.count({ where: { archivedAt: null, isTastingMenu: true } }),
-      db.order.findMany({
-        orderBy: { createdAt: 'desc' },
+      db.cafeProfile.count(),
+      db.delivery.findMany({
+        where: { status: { in: ['SCHEDULED', 'PREPARING'] } },
+        orderBy: { deliveryDate: 'asc' },
         take: 6,
-        select: { id: true, orderNumber: true, customerName: true, totalHalalas: true, createdAt: true },
+        select: {
+          id: true, deliveryDate: true, status: true, subtotalHalalas: true,
+          order: { select: { orderNumber: true, type: true, cafe: { select: { cafeName: true } } } },
+        },
       }),
       db.tastingRequest.findMany({
         orderBy: { createdAt: 'desc' },
         take: 6,
         select: { id: true, requestNumber: true, cafeName: true, createdAt: true, _count: { select: { selectedProducts: true } } },
       }),
-      db.orderItem.groupBy({
+      db.deliveryItem.groupBy({
         by: ['titleSnapshot'],
-        where: { order: { status: { not: 'CANCELLED' } } },
+        where: { delivery: { order: { status: { not: 'CANCELLED' } } } },
         _sum: { quantity: true },
         orderBy: { _sum: { quantity: 'desc' } },
         take: 5,
@@ -49,14 +53,14 @@ export async function getDashboardData() {
     ])
 
   const activity = [
-    ...recentOrders.map((o) => ({
-      kind: 'order' as const,
-      id: o.id,
-      ref: `ORD-${o.orderNumber}`,
-      who: o.customerName,
-      amountHalalas: o.totalHalalas,
+    ...upcomingDeliveries.map((d) => ({
+      kind: 'delivery' as const,
+      id: d.id,
+      ref: `ORD-${d.order.orderNumber}${d.order.type === 'WEEKLY_SCHEDULE' ? ' · weekly' : ''}`,
+      who: d.order.cafe.cafeName,
+      amountHalalas: d.subtotalHalalas,
       samples: 0,
-      at: o.createdAt,
+      at: d.deliveryDate,
     })),
     ...recentRequests.map((r) => ({
       kind: 'tasting' as const,
@@ -78,7 +82,7 @@ export async function getDashboardData() {
     newRequests,
     totalRequests,
     liveProducts,
-    tastingProducts,
+    cafeCount,
     activity,
     bestSellers: top.map((t) => ({ title: t.titleSnapshot, qty: t._sum.quantity ?? 0 })),
   }
@@ -87,24 +91,21 @@ export type DashboardData = Awaited<ReturnType<typeof getDashboardData>>
 
 export async function listOrders() {
   await requireStaffPage()
-  const orders = await db.order.findMany({
+  return db.order.findMany({
     orderBy: { createdAt: 'desc' },
     take: 200,
     select: {
-      id: true,
-      orderNumber: true,
-      status: true,
-      fulfillment: true,
-      paymentMethod: true,
-      customerName: true,
-      customerPhone: true,
-      deliveryAddress: true,
-      totalHalalas: true,
-      createdAt: true,
-      items: { select: { id: true, titleSnapshot: true, quantity: true } },
+      id: true, orderNumber: true, type: true, status: true, totalHalalas: true, createdAt: true, weekStartDate: true,
+      cafe: { select: { cafeName: true, contactPhone: true } },
+      deliveries: {
+        orderBy: { deliveryDate: 'asc' },
+        select: {
+          id: true, deliveryDate: true, status: true, subtotalHalalas: true, addressSnapshot: true,
+          items: { select: { id: true, titleSnapshot: true, quantity: true } },
+        },
+      },
     },
   })
-  return orders
 }
 export type AdminOrder = Awaited<ReturnType<typeof listOrders>>[number]
 
@@ -128,7 +129,7 @@ export async function listAdminProducts(locale: Locale) {
     where: { archivedAt: null },
     orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
     select: {
-      id: true, slug: true, priceHalalas: true, inStock: true, isTastingMenu: true, isFeatured: true,
+      id: true, slug: true, priceHalalas: true, inStock: true, isTastingMenu: true, isSchedulable: true, isFeatured: true,
       sortOrder: true, categoryId: true,
       category: { select: { translations: { where: { locale }, select: { name: true } }, slug: true } },
       translations: { select: { locale: true, title: true, description: true, badge: true } },
@@ -154,3 +155,61 @@ export async function listCategories(locale: Locale) {
   return rows.map((c) => ({ id: c.id, name: c.translations[0]?.name ?? c.slug }))
 }
 export type AdminCategory = Awaited<ReturnType<typeof listCategories>>[number]
+
+// ── Clients / Cafés ─────────────────────────────────────────────────────────
+
+export async function listCafes() {
+  await requireStaffPage()
+  const rows = await db.cafeProfile.findMany({
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true, cafeName: true, contactName: true, contactPhone: true, contactEmail: true, createdAt: true,
+      user: { select: { isActive: true, lastLoginAt: true, mustChangePassword: true } },
+      _count: { select: { orders: true } },
+    },
+  })
+  return rows.map((c) => ({
+    id: c.id,
+    cafeName: c.cafeName,
+    contactName: c.contactName,
+    contactPhone: c.contactPhone,
+    contactEmail: c.contactEmail,
+    createdAt: c.createdAt,
+    isActive: c.user.isActive,
+    lastLoginAt: c.user.lastLoginAt,
+    mustChangePassword: c.user.mustChangePassword,
+    orderCount: c._count.orders,
+  }))
+}
+export type AdminCafe = Awaited<ReturnType<typeof listCafes>>[number]
+
+export async function getCafeDetail(id: string) {
+  await requireStaffPage()
+  return db.cafeProfile.findUnique({
+    where: { id },
+    select: {
+      id: true, cafeName: true, legalName: true, contactName: true, contactPhone: true, contactEmail: true,
+      vatNumber: true, crNumber: true, internalNotes: true, preferredLocale: true, createdAt: true,
+      user: { select: { isActive: true, lastLoginAt: true, mustChangePassword: true } },
+      addresses: { where: { archivedAt: null }, orderBy: { isDefault: 'desc' } },
+      orders: {
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+        select: { id: true, orderNumber: true, type: true, status: true, totalHalalas: true, createdAt: true },
+      },
+    },
+  })
+}
+export type AdminCafeDetail = NonNullable<Awaited<ReturnType<typeof getCafeDetail>>>
+
+// ── Scheduling settings ─────────────────────────────────────────────────────
+
+export async function getSchedulingSettings() {
+  await requireStaffPage()
+  return db.schedulingSettings.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } })
+}
+
+export async function listBlackoutDates() {
+  await requireStaffPage()
+  return db.blackoutDate.findMany({ orderBy: { date: 'asc' } })
+}

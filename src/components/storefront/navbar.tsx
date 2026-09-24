@@ -1,19 +1,19 @@
 'use client'
 
 import { useState } from 'react'
-import NextLink from 'next/link'
-import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'framer-motion'
-import { Languages, LayoutDashboard, ShoppingBag } from 'lucide-react'
+import { motion, useMotionValueEvent, useScroll } from 'framer-motion'
+import { Languages, LogIn } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
 import { LogoMark, Wordmark } from '@/components/ui/logo'
 import ThemeToggle from '@/components/ui/theme-toggle'
-import { useCart } from './cart-provider'
 
-export default function Navbar({ onCart }: { onCart: () => void }) {
+// NOTE: this storefront has no /admin reference anywhere — the back office
+// is a separate, unlinked area. The only account entry point here is the
+// café partner portal (/account), which is itself closed (no sign-up).
+export default function Navbar() {
   const t = useTranslations('Nav')
   const locale = useLocale()
-  const { count } = useCart()
   const { scrollY } = useScroll()
   const [scrolled, setScrolled] = useState(false)
   useMotionValueEvent(scrollY, 'change', (y) => setScrolled(y > 40))
@@ -50,39 +50,14 @@ export default function Navbar({ onCart }: { onCart: () => void }) {
           <Link
             href="/"
             locale={locale === 'ar' ? 'en' : 'ar'}
-            className="flex h-10 items-center gap-1.5 rounded-full border border-line px-3 text-xs text-muted transition hover:border-rose-500/50 hover:text-cream"
+            className="hidden h-10 items-center gap-1.5 rounded-full border border-line px-3 text-xs text-muted transition hover:border-rose-500/50 hover:text-cream sm:flex"
           >
             <Languages size={14} /> {t('switchLanguage')}
           </Link>
           <ThemeToggle className="hidden sm:grid" />
-          <NextLink
-            href="/admin"
-            className="hidden h-10 items-center gap-2 rounded-full border border-line px-4 text-xs text-muted transition hover:border-rose-500/50 hover:text-cream lg:flex"
-          >
-            <LayoutDashboard size={14} /> {t('admin')}
-          </NextLink>
-          <button
-            type="button"
-            onClick={onCart}
-            aria-label={t('openCart', { count })}
-            className="relative grid h-10 w-10 place-items-center rounded-full border border-line transition hover:border-rose-500/60"
-          >
-            <ShoppingBag size={17} />
-            <AnimatePresence>
-              {count > 0 && (
-                <motion.span
-                  key={count}
-                  initial={{ scale: 0.3, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0, opacity: 0 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 18 }}
-                  className="absolute -end-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-rose-600 px-1 text-[10px] font-bold text-white"
-                >
-                  {count}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </button>
+          <a href="/account" className="btn-primary py-2 text-xs md:text-sm">
+            <LogIn size={15} /> {t('portal')}
+          </a>
         </div>
       </nav>
     </header>

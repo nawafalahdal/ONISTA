@@ -2,18 +2,19 @@
 
 import { AuthError, CredentialsSignin } from 'next-auth'
 import { signIn, signOut } from '@/auth'
-import { ADMIN_LOGIN_PATH, safeAdminRedirect } from '@/config/security'
+import { hashPassword, verifyPassword } from '@/auth/password'
+import { ACCOUNT_LOGIN_PATH, ADMIN_LOGIN_PATH, safeAccountRedirect, safeAdminRedirect } from '@/config/security'
+import { fail, ok, type ActionResult } from '@/lib/action-result'
+import { changePasswordSchema } from '@/lib/validation/auth'
+import { db } from '@/server/db'
+import { getSessionUser } from '@/server/dal/session'
+import { rateLimit } from '@/server/security/rate-limit'
 
 export type LoginState = { error: 'invalidCredentials' | 'rateLimited' } | null
 
-export async function login(_prev: LoginState, formData: FormData): Promise<LoginState> {
+async function submitLogin(formData: FormData, redirectTo: string): Promise<LoginState> {
   try {
-    await signIn('credentials', {
-      email: formData.get('email'),
-      password: formData.get('password'),
-      // Open-redirect safe: only paths inside /admin are honoured.
-      redirectTo: safeAdminRedirect(formData.get('callbackUrl')),
-    })
+    await signIn('credentials', { identifier: formData.get('identifier'), password: formData.get('password'), redirectTo })
     return null
   } catch (error) {
     if (error instanceof CredentialsSignin) {
@@ -24,6 +25,46 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   }
 }
 
+/** Admin/staff sign-in at /admin/login. */
+export async function login(_prev: LoginState, formData: FormData): Promise<LoginState> {
+  return submitLogin(formData, safeAdminRedirect(formData.get('callbackUrl')))
+}
+
+/** Café-account sign-in at /account/login. No self-service sign-up exists. */
+export async function cafeLogin(_prev: LoginState, formData: FormData): Promise<LoginState> {
+  return submitLogin(formData, safeAccountRedirect(formData.get('callbackUrl')))
+}
+
 export async function logout() {
   await signOut({ redirectTo: ADMIN_LOGIN_PATH })
+}
+
+export async function cafeLogout() {
+  await signOut({ redirectTo: ACCOUNT_LOGIN_PATH })
+}
+
+/**
+ * First-login flow: an admin-issued password must be changed before the
+ * café portal (or, in principle, a staff account) is used further.
+ */
+export async function changePassword(input: unknown): Promise<ActionResult<undefined>> {
+  const user = await getSessionUser()
+  if (!user) return fail('unauthorized')
+  const limit = await rateLimit('cafeMutation', user.id)
+  if (!limit.success) return fail('rateLimited')
+
+  const parsed = changePasswordSchema.safeParse(input)
+  if (!parsed.success) return fail('validation', { confirmPassword: ['passwordMismatch'] })
+  const { currentPassword, newPassword } = parsed.data
+
+  const row = await db.user.findUnique({ where: { id: user.id }, select: { passwordHash: true } })
+  if (!(await verifyPassword(currentPassword, row?.passwordHash))) {
+    return fail('validation', { currentPassword: ['invalid'] })
+  }
+
+  await db.user.update({
+    where: { id: user.id },
+    data: { passwordHash: await hashPassword(newPassword), mustChangePassword: false },
+  })
+  return ok(undefined)
 }

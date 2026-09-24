@@ -1,11 +1,11 @@
-// Shared by the checkout UI (estimate) and the server (authoritative totals).
-export const DELIVERY_FEE_HALALAS = 2500 // 25 SAR
+// Shared by the schedule/order-builder UI (a live estimate as the café picks
+// items) and the server (authoritative totals, computed from DB prices and
+// the live SchedulingSettings — see src/server/scheduling.ts).
 export const VAT_RATE = 0.15
 
-export type Fulfillment = 'DELIVERY' | 'PICKUP'
-
-export function computeTotals(subtotalHalalas: number, fulfillment: Fulfillment) {
-  const deliveryFeeHalalas = fulfillment === 'DELIVERY' ? DELIVERY_FEE_HALALAS : 0
+/** `deliveryFeeHalalas` is charged per delivery day (each is a separate drop-off). */
+export function computeTotals(subtotalHalalas: number, deliveryDays: number, deliveryFeePerDayHalalas: number) {
+  const deliveryFeeHalalas = deliveryDays * deliveryFeePerDayHalalas
   const vatHalalas = Math.round((subtotalHalalas + deliveryFeeHalalas) * VAT_RATE)
   return {
     subtotalHalalas,

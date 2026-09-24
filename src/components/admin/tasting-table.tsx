@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { MapPin, MessageCircle } from 'lucide-react'
+import { Building2, MapPin, MessageCircle } from 'lucide-react'
 import { useFormatter, useTranslations } from 'next-intl'
 import type { AdminTastingRequest } from '@/server/queries/admin'
 import { updateTastingRequestStatus } from '@/server/actions/tasting-requests'
@@ -101,6 +101,13 @@ export default function TastingTable({ requests }: { requests: AdminTastingReque
                     />
                   </td>
                   <td className="px-5 py-4 text-end align-top">
+                    <div className="flex justify-end gap-2">
+                    <a
+                      href={`/admin/clients?cafeName=${encodeURIComponent(r.cafeName)}&phone=${encodeURIComponent(r.phone)}`}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-medium text-muted transition hover:border-rose-500/50 hover:text-cream"
+                    >
+                      <Building2 size={13} /> {t('convertCta')}
+                    </a>
                     <a
                       href={replyLink(r)}
                       target="_blank"
@@ -112,6 +119,7 @@ export default function TastingTable({ requests }: { requests: AdminTastingReque
                     >
                       <MessageCircle size={13} /> {t('reply')}
                     </a>
+                    </div>
                   </td>
                 </tr>
               ))}

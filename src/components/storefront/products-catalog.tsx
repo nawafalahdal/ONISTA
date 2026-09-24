@@ -2,20 +2,13 @@
 
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Check, Plus } from 'lucide-react'
+import { LogIn } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import type { CatalogProduct } from '@/server/queries/catalog'
 import SmartImage from '@/components/ui/smart-image'
 import { formatSar } from '@/lib/money'
-import { useCart } from './cart-provider'
 
-export default function ProductsCatalog({
-  products,
-  onAdded,
-}: {
-  products: CatalogProduct[]
-  onAdded: (p: CatalogProduct) => void
-}) {
+export default function ProductsCatalog({ products }: { products: CatalogProduct[] }) {
   const t = useTranslations('Catalog')
   const [filter, setFilter] = useState('all')
 
@@ -63,7 +56,7 @@ export default function ProductsCatalog({
       <motion.div layout className="mt-12 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
         <AnimatePresence mode="popLayout">
           {visible.map((product, i) => (
-            <ProductCard key={product.id} product={product} index={i} onAdded={onAdded} />
+            <ProductCard key={product.id} product={product} index={i} />
           ))}
         </AnimatePresence>
       </motion.div>
@@ -72,26 +65,9 @@ export default function ProductsCatalog({
   )
 }
 
-function ProductCard({
-  product,
-  index,
-  onAdded,
-}: {
-  product: CatalogProduct
-  index: number
-  onAdded: (p: CatalogProduct) => void
-}) {
+function ProductCard({ product, index }: { product: CatalogProduct; index: number }) {
   const t = useTranslations('Catalog')
   const locale = useLocale() as 'ar' | 'en'
-  const { add } = useCart()
-  const [justAdded, setJustAdded] = useState(false)
-
-  const handleAdd = () => {
-    add(product.id)
-    onAdded(product)
-    setJustAdded(true)
-    setTimeout(() => setJustAdded(false), 1400)
-  }
 
   return (
     <motion.article
@@ -113,38 +89,18 @@ function ProductCard({
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
-        <div className="absolute start-4 top-4 flex gap-2">
-          {product.badge && (
-            <span className="rounded-full bg-black/55 px-3 py-1 text-[10px] tracking-[0.2em] text-rose-200 uppercase backdrop-blur">
-              {product.badge}
-            </span>
-          )}
-          {!product.inStock && (
-            <span className="rounded-full bg-black/55 px-3 py-1 text-[10px] tracking-[0.2em] text-white/80 uppercase backdrop-blur">
-              {t('soldOut')}
-            </span>
-          )}
-        </div>
+        {product.badge && (
+          <span className="absolute start-4 top-4 rounded-full bg-black/55 px-3 py-1 text-[10px] tracking-[0.2em] text-rose-200 uppercase backdrop-blur">
+            {product.badge}
+          </span>
+        )}
 
-        <button
-          type="button"
-          onClick={handleAdd}
-          disabled={!product.inStock}
-          aria-label={t('addAria', { name: product.title })}
-          className="absolute bottom-4 end-4 flex h-12 items-center gap-2 overflow-hidden rounded-full bg-white px-4 text-sm font-semibold text-[#1d1518] shadow-xl transition hover:bg-rose-50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 md:focus-visible:translate-y-0 md:focus-visible:opacity-100"
+        <a
+          href="/account"
+          className="absolute bottom-4 end-4 flex h-12 items-center gap-2 overflow-hidden rounded-full bg-white px-4 text-sm font-semibold text-[#1d1518] shadow-xl transition hover:bg-rose-50 active:scale-95 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 md:focus-visible:translate-y-0 md:focus-visible:opacity-100"
         >
-          <AnimatePresence mode="wait" initial={false}>
-            {justAdded ? (
-              <motion.span key="ok" initial={{ y: 16 }} animate={{ y: 0 }} exit={{ y: -16 }} className="flex items-center gap-2">
-                <Check size={16} /> {t('added')}
-              </motion.span>
-            ) : (
-              <motion.span key="add" initial={{ y: 16 }} animate={{ y: 0 }} exit={{ y: -16 }} className="flex items-center gap-2">
-                <Plus size={16} /> {t('add')}
-              </motion.span>
-            )}
-          </AnimatePresence>
-        </button>
+          <LogIn size={15} /> {t('cta')}
+        </a>
       </div>
 
       <div className="mt-5 flex items-start justify-between gap-4 px-1">
@@ -152,7 +108,10 @@ function ProductCard({
           <h3 className="font-display text-2xl leading-tight">{product.title}</h3>
           <p className="mt-1 text-xs text-rose-500 dark:text-rose-300/80">{product.category.name}</p>
         </div>
-        <p className="shrink-0 pt-1 text-sm font-semibold text-cream">{formatSar(product.priceHalalas, locale)}</p>
+        <p className="shrink-0 pt-1 text-end text-sm font-semibold text-cream">
+          {formatSar(product.priceHalalas, locale)}
+          <span className="block text-[10px] font-normal text-muted">{t('partnersOnly')}</span>
+        </p>
       </div>
       <p className="mt-2 px-1 text-sm leading-relaxed text-muted">{product.description}</p>
     </motion.article>
