@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { MSG, email, id, localeSchema, optional, phone, text } from './common'
 
-export const MAX_TASTING_ITEMS = 5
+export const MAX_TASTING_ITEMS = 3
 
 export const tastingRequestSchema = z.object({
   cafeName: text({ min: 2, max: 100 }),

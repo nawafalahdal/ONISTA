@@ -3,13 +3,14 @@
 import { useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Building2, KeyRound, Plus } from 'lucide-react'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import type { AdminCafe } from '@/server/queries/admin'
 import { createCafeAccount, resetCafePassword, setCafeActive } from '@/server/actions/cafes'
 import { CloseButton, Drawer } from '@/components/ui/overlay'
 import Toast from '@/components/ui/toast'
 import { useAdminAction } from '@/hooks/use-admin-action'
 import { useToast } from '@/hooks/use-toast'
+import { JEDDAH } from '@/lib/constants'
 import { EmptyRow, PageHeader, Panel, Toggle } from './ui'
 
 export default function ClientsManager({ cafes, prefill }: { cafes: AdminCafe[]; prefill?: { cafeName: string; phone: string } }) {
@@ -153,12 +154,13 @@ function CreateClientForm({
 }) {
   const t = useTranslations('Admin')
   const tv = useTranslations('Validation')
+  const locale = useLocale()
   const { toast, notify } = useToast()
   const { run, pending } = useAdminAction(notify)
   const [errors, setErrors] = useState<Record<string, string[]>>({})
   const [f, setF] = useState({
     cafeName: prefill?.cafeName ?? '', contactName: '', phone: prefill?.phone ?? '', contactEmail: '', password: '',
-    label: 'Main', city: '', district: '', street: '', buildingNumber: '', additionalNumber: '', postalCode: '',
+    label: 'Main', city: JEDDAH[locale], district: '', street: '', buildingNumber: '', additionalNumber: '', postalCode: '',
   })
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF((p) => ({ ...p, [k]: e.target.value }))
   const err = (k: string) => {
@@ -233,7 +235,7 @@ function CreateClientForm({
             </Field>
             <div className="grid grid-cols-2 gap-4">
               <Field label={t('city')} error={err('address.city')}>
-                <input className="field" value={f.city} onChange={set('city')} required />
+                <input className="field cursor-not-allowed opacity-70" value={f.city} readOnly />
               </Field>
               <Field label={t('district')} error={err('address.district')}>
                 <input className="field" value={f.district} onChange={set('district')} required />

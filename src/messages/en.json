@@ -1,7 +1,7 @@
 {
   "Meta": {
     "title": "Onista — Wholesale Patisserie for Cafés",
-    "description": "Onista supplies Riyadh's finest cafés with exceptional artisanal desserts, delivered to a fixed weekly schedule."
+    "description": "Onista supplies Jeddah's finest cafés with exceptional artisanal desserts, delivered to a fixed weekly schedule."
   },
   "Nav": {
     "about": "About",
@@ -14,12 +14,12 @@
     "switchLanguage": "العربية"
   },
   "Hero": {
-    "eyebrow": "Onista · Wholesale Patisserie · Riyadh",
+    "eyebrow": "Onista · Wholesale Patisserie · Jeddah",
     "titleA": "The dessert program behind",
-    "titleB": "Riyadh's finest cafés.",
+    "titleB": "Jeddah's finest cafés.",
     "explore": "View the collection",
     "tasting": "Request a tasting box",
-    "ring": "Wholesale patisserie · Scheduled delivery · Riyadh · Onista · Est. 2019 ·",
+    "ring": "Wholesale patisserie · Scheduled delivery · Jeddah · Onista · Est. 2019 ·",
     "scroll": "Scroll"
   },
   "About": {
@@ -27,7 +27,7 @@
     "titleA": "Built for cafés",
     "titleB": "that can't afford surprises.",
     "body": "Onista is a dedicated wholesale kitchen: every cake, entremet and viennoiserie is produced to order for our partner cafés, on a fixed weekly delivery schedule you set once and rely on every week. No walk-in counter, no retail queue — just consistent, French-technique pastry, produced to your calendar and invoiced as one clean weekly order.",
-    "statEst": "Serving Riyadh since",
+    "statEst": "Serving Jeddah since",
     "statCafes": "Partner cafés",
     "statDough": "On-time delivery rate"
   },
@@ -46,9 +46,9 @@
     "body": "Before you commit to a weekly schedule, taste the range. Tell us which pieces you'd like to sample and our wholesale team will confirm a complimentary tasting box over WhatsApp, usually within the hour — then we'll set up your partner account.",
     "cta": "Request a tasting box",
     "perk1Title": "A curated sample box",
-    "perk1Text": "Up to five items from the wholesale menu, boxed for your team to taste.",
+    "perk1Text": "Up to three items from the wholesale menu, boxed for your team to taste.",
     "perk2Title": "Delivered to your café",
-    "perk2Text": "Complimentary drop-off within Riyadh, Jeddah and Khobar.",
+    "perk2Text": "Complimentary drop-off anywhere in Jeddah.",
     "perk3Title": "A partner account, set up for you",
     "perk3Text": "Once you're ready, we create your login and your first weekly schedule together.",
     "fab": "Request a tasting box",
@@ -61,7 +61,7 @@
     "cafeNamePh": "e.g. Brew Theory",
     "phone": "Phone number",
     "city": "City (optional)",
-    "cityPh": "Riyadh",
+    "cityPh": "Jeddah",
     "notes": "Notes (optional)",
     "notesPh": "Preferred delivery day…",
     "submit": "Generate WhatsApp request",
@@ -75,9 +75,9 @@
     "copied": "Copied"
   },
   "Footer": {
-    "tagline": "A dedicated wholesale kitchen supplying signature cakes and pastry to Riyadh's best cafés, on a fixed weekly schedule.",
+    "tagline": "A dedicated wholesale kitchen supplying signature cakes and pastry to Jeddah's best cafés, on a fixed weekly schedule.",
     "visit": "Kitchen",
-    "address": "Prince Sultan Rd, Riyadh",
+    "address": "Tahlia Street, Jeddah",
     "hours": "Order cut-off",
     "cutoffLine": "Daily, {hour}:00 for next available delivery",
     "noSameDay": "Same-day delivery is not offered.",

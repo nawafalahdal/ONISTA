@@ -3,21 +3,22 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { MapPin, Plus, Star, Trash2 } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import type { CafeAddressRow } from '@/server/queries/cafe'
 import { archiveCafeAddress, createCafeAddress, setDefaultCafeAddress } from '@/server/actions/cafe-addresses'
 import { useAdminAction } from '@/hooks/use-admin-action'
 import { useToast } from '@/hooks/use-toast'
 import Toast from '@/components/ui/toast'
-
-const emptyForm = { label: '', city: '', district: '', street: '', buildingNumber: '', additionalNumber: '', postalCode: '', deliveryNotes: '' }
+import { JEDDAH } from '@/lib/constants'
 
 export default function AddressesManager({ addresses }: { addresses: CafeAddressRow[] }) {
   const t = useTranslations('Account.Addresses')
   const tc = useTranslations('Common')
+  const locale = useLocale()
   const { toast, notify } = useToast()
   const { run, pending } = useAdminAction(notify)
   const [adding, setAdding] = useState(false)
+  const emptyForm = { label: '', city: JEDDAH[locale], district: '', street: '', buildingNumber: '', additionalNumber: '', postalCode: '', deliveryNotes: '' }
   const [f, setF] = useState(emptyForm)
 
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setF((p) => ({ ...p, [k]: e.target.value }))
@@ -54,7 +55,7 @@ export default function AddressesManager({ addresses }: { addresses: CafeAddress
         <form onSubmit={submit} className="rounded-2xl border border-line bg-ink-2 p-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <input className="field" placeholder={t('label')} value={f.label} onChange={set('label')} required />
-            <input className="field" placeholder={t('city')} value={f.city} onChange={set('city')} required />
+            <input className="field cursor-not-allowed opacity-70" placeholder={t('city')} value={f.city} readOnly />
             <input className="field" placeholder={t('district')} value={f.district} onChange={set('district')} required />
             <input className="field" placeholder={t('street')} value={f.street} onChange={set('street')} required />
             <input className="field" dir="ltr" placeholder={t('buildingNumber')} value={f.buildingNumber} onChange={set('buildingNumber')} />

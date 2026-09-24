@@ -11,6 +11,7 @@ import { createCafeAddress } from '@/server/actions/cafe-addresses'
 import { submitOneOffOrder, submitWeeklySchedule } from '@/server/actions/orders'
 import { computeTotals } from '@/lib/pricing'
 import { formatSar } from '@/lib/money'
+import { JEDDAH } from '@/lib/constants'
 
 type Mode = 'one-off' | 'weekly'
 type Line = { key: string; productId: string; quantity: number }
@@ -45,7 +46,7 @@ export default function ScheduleBuilder({
   const [mode, setMode] = useState<Mode>(initialMode)
   const [days, setDays] = useState<Day[]>([emptyDay(earliestDate)])
   const [addressId, setAddressId] = useState<string>(addresses.find((a) => a.isDefault)?.id ?? addresses[0]?.id ?? '__new')
-  const [newAddress, setNewAddress] = useState({ label: '', city: '', district: '', street: '', buildingNumber: '', additionalNumber: '', postalCode: '' })
+  const [newAddress, setNewAddress] = useState({ label: '', city: JEDDAH[locale], district: '', street: '', buildingNumber: '', additionalNumber: '', postalCode: '' })
   const [payment, setPayment] = useState<Payment>('CARD')
   const [notes, setNotes] = useState('')
   const [phase, setPhase] = useState<'form' | 'submitting' | 'done'>('form')
@@ -205,7 +206,7 @@ export default function ScheduleBuilder({
               <div className="mt-4 grid gap-3 border-t border-line pt-4 sm:grid-cols-2">
                 <input className="field" placeholder={taddr('labelPh')} value={newAddress.label} onChange={(e) => setNewAddress((a) => ({ ...a, label: e.target.value }))} />
                 <div />
-                <input className="field" placeholder={taddr('city')} value={newAddress.city} onChange={(e) => setNewAddress((a) => ({ ...a, city: e.target.value }))} />
+                <input className="field cursor-not-allowed opacity-70" placeholder={taddr('city')} value={newAddress.city} readOnly />
                 <input className="field" placeholder={taddr('district')} value={newAddress.district} onChange={(e) => setNewAddress((a) => ({ ...a, district: e.target.value }))} />
                 <input className="field sm:col-span-2" placeholder={taddr('street')} value={newAddress.street} onChange={(e) => setNewAddress((a) => ({ ...a, street: e.target.value }))} />
               </div>
