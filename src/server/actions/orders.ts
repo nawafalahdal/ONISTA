@@ -101,7 +101,7 @@ export async function updateDeliveryStatus(input: unknown): Promise<ActionResult
     const siblings = await db.delivery.findMany({ where: { orderId: delivery.orderId }, select: { status: true } })
     if (siblings.every((s) => s.status === 'DELIVERED')) {
       await db.order.updateMany({ where: { id: delivery.orderId, status: { not: 'CANCELLED' } }, data: { status: 'COMPLETED' } })
-    } else if (siblings.some((s) => s.status === 'OUT_FOR_DELIVERY' || s.status === 'DELIVERED' || s.status === 'PREPARING')) {
+    } else if (siblings.some((s) => s.status === 'OUT_FOR_DELIVERY' || s.status === 'DELIVERED' || s.status === 'IN_PROGRESS')) {
       await db.order.updateMany({ where: { id: delivery.orderId, status: 'CONFIRMED' }, data: { status: 'IN_PROGRESS' } })
     }
   }

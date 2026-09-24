@@ -28,7 +28,7 @@ export async function createCafeAccount(input: unknown): Promise<ActionResult<{ 
 
   const parsed = createCafeAccountSchema.safeParse(input)
   if (!parsed.success) return fail('validation', fieldErrors(parsed.error))
-  const { cafeName, contactName, phone, contactEmail, password, address } = parsed.data
+  const { cafeName, contactName, phone, contactEmail, password, googleMapsUrl, address } = parsed.data
 
   try {
     const created = await db.user.create({
@@ -45,6 +45,7 @@ export async function createCafeAccount(input: unknown): Promise<ActionResult<{ 
             contactName,
             contactPhone: phone,
             contactEmail,
+            googleMapsUrl,
             addresses: { create: { ...address, isDefault: true } },
           },
         },

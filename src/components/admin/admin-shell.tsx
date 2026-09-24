@@ -4,7 +4,7 @@ import { useTransition, type ReactNode } from 'react'
 import NextLink from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Building2, Cake, ClipboardList, Coffee, ExternalLink, Languages, LayoutDashboard, LogOut, Settings } from 'lucide-react'
+import { Building2, Cake, CalendarRange, ClipboardList, Coffee, ExternalLink, Languages, LayoutDashboard, LogOut, RotateCcw, Settings, Truck } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { LogoMark, Wordmark } from '@/components/ui/logo'
 import ThemeToggle from '@/components/ui/theme-toggle'
@@ -17,7 +17,7 @@ export default function AdminShell({
   children,
 }: {
   user: { email: string | null; role: string }
-  counts: { newOrders: number; newRequests: number }
+  counts: { newOrders: number; newRequests: number; pendingReturns: number }
   children: ReactNode
 }) {
   const t = useTranslations('Admin')
@@ -29,9 +29,12 @@ export default function AdminShell({
   const nav = [
     { href: '/admin', label: t('overview'), icon: LayoutDashboard },
     { href: '/admin/orders', label: t('orders'), icon: ClipboardList, badge: counts.newOrders },
+    { href: '/admin/schedule', label: t('kitchenSchedule'), icon: CalendarRange },
+    { href: '/admin/returns', label: t('returns'), icon: RotateCcw, badge: counts.pendingReturns },
     { href: '/admin/tasting-requests', label: t('tasting'), icon: Coffee, badge: counts.newRequests },
     { href: '/admin/products', label: t('products'), icon: Cake },
     { href: '/admin/clients', label: t('clients'), icon: Building2 },
+    { href: '/admin/drivers', label: t('drivers'), icon: Truck },
     { href: '/admin/settings', label: t('settings'), icon: Settings },
   ]
   const isActive = (href: string) => (href === '/admin' ? pathname === href : pathname.startsWith(href))

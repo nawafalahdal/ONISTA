@@ -4,7 +4,7 @@ import { useTransition, type ReactNode } from 'react'
 import NextLink from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { CalendarClock, ClipboardList, LayoutDashboard, Languages, LogOut, MapPin, Store } from 'lucide-react'
+import { Building2, CalendarClock, ClipboardList, LayoutDashboard, Languages, LogOut, MapPin, Store } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { LogoMark, Wordmark } from '@/components/ui/logo'
 import ThemeToggle from '@/components/ui/theme-toggle'
@@ -23,6 +23,7 @@ export default function CafeShell({ cafeName, children }: { cafeName: string; ch
     { href: '/account/schedule', label: t('nav.schedule'), icon: CalendarClock },
     { href: '/account/orders', label: t('nav.orders'), icon: ClipboardList },
     { href: '/account/addresses', label: t('nav.addresses'), icon: MapPin },
+    { href: '/account/profile', label: t('nav.profile'), icon: Building2 },
   ]
   const isActive = (href: string) => (href === '/account' ? pathname === href : pathname.startsWith(href))
 

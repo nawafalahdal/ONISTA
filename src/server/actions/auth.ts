@@ -3,7 +3,14 @@
 import { AuthError, CredentialsSignin } from 'next-auth'
 import { signIn, signOut } from '@/auth'
 import { hashPassword, verifyPassword } from '@/auth/password'
-import { ACCOUNT_LOGIN_PATH, ADMIN_LOGIN_PATH, safeAccountRedirect, safeAdminRedirect } from '@/config/security'
+import {
+  ACCOUNT_LOGIN_PATH,
+  ADMIN_LOGIN_PATH,
+  DRIVER_LOGIN_PATH,
+  safeAccountRedirect,
+  safeAdminRedirect,
+  safeDriverRedirect,
+} from '@/config/security'
 import { fail, ok, type ActionResult } from '@/lib/action-result'
 import { changePasswordSchema } from '@/lib/validation/auth'
 import { db } from '@/server/db'
@@ -35,12 +42,21 @@ export async function cafeLogin(_prev: LoginState, formData: FormData): Promise<
   return submitLogin(formData, safeAccountRedirect(formData.get('callbackUrl')))
 }
 
+/** Driver sign-in at /driver/login. Accounts are admin-issued, same as cafés. */
+export async function driverLogin(_prev: LoginState, formData: FormData): Promise<LoginState> {
+  return submitLogin(formData, safeDriverRedirect(formData.get('callbackUrl')))
+}
+
 export async function logout() {
   await signOut({ redirectTo: ADMIN_LOGIN_PATH })
 }
 
 export async function cafeLogout() {
   await signOut({ redirectTo: ACCOUNT_LOGIN_PATH })
+}
+
+export async function driverLogout() {
+  await signOut({ redirectTo: DRIVER_LOGIN_PATH })
 }
 
 /**

@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Building2, KeyRound, Plus } from 'lucide-react'
+import { Building2, KeyRound, MapPin, Plus } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import type { AdminCafe } from '@/server/queries/admin'
 import { createCafeAccount, resetCafePassword, setCafeActive } from '@/server/actions/cafes'
@@ -41,6 +41,7 @@ export default function ClientsManager({ cafes, prefill }: { cafes: AdminCafe[];
                 <th className="px-5 py-3 text-start font-medium">{t('colJoined')}</th>
                 <th className="px-5 py-3 text-center font-medium">{t('colActive')}</th>
                 <th className="px-5 py-3" />
+                <th className="px-5 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
@@ -73,6 +74,19 @@ export default function ClientsManager({ cafes, prefill }: { cafes: AdminCafe[];
                       />
                     </td>
                     <td className="px-5 py-3">
+                      {c.googleMapsUrl && (
+                        <a
+                          href={c.googleMapsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={t('googleMapsLink')}
+                          className="grid h-8 w-8 place-items-center rounded-lg text-muted transition hover:bg-ink-3 hover:text-rose-500"
+                        >
+                          <MapPin size={15} />
+                        </a>
+                      )}
+                    </td>
+                    <td className="px-5 py-3">
                       <button
                         type="button"
                         onClick={() => setResetTarget(c)}
@@ -85,7 +99,7 @@ export default function ClientsManager({ cafes, prefill }: { cafes: AdminCafe[];
                   </motion.tr>
                 ))}
               </AnimatePresence>
-              {cafes.length === 0 && <EmptyRow colSpan={7}>{t('noClients')}</EmptyRow>}
+              {cafes.length === 0 && <EmptyRow colSpan={8}>{t('noClients')}</EmptyRow>}
             </tbody>
           </table>
         </div>
@@ -159,7 +173,7 @@ function CreateClientForm({
   const { run, pending } = useAdminAction(notify)
   const [errors, setErrors] = useState<Record<string, string[]>>({})
   const [f, setF] = useState({
-    cafeName: prefill?.cafeName ?? '', contactName: '', phone: prefill?.phone ?? '', contactEmail: '', password: '',
+    cafeName: prefill?.cafeName ?? '', contactName: '', phone: prefill?.phone ?? '', contactEmail: '', password: '', googleMapsUrl: '',
     label: 'Main', city: JEDDAH[locale], district: '', street: '', buildingNumber: '', additionalNumber: '', postalCode: '',
   })
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF((p) => ({ ...p, [k]: e.target.value }))
@@ -179,6 +193,7 @@ function CreateClientForm({
           phone: f.phone,
           contactEmail: f.contactEmail,
           password: f.password,
+          googleMapsUrl: f.googleMapsUrl,
           address: {
             label: f.label,
             city: f.city,
@@ -225,6 +240,16 @@ function CreateClientForm({
         </div>
         <Field label={t('initialPassword')} error={err('password')}>
           <input className="field" dir="ltr" value={f.password} onChange={set('password')} minLength={8} required />
+        </Field>
+        <Field label={t('googleMapsLink')} error={err('googleMapsUrl')}>
+          <input
+            className="field"
+            dir="ltr"
+            type="url"
+            value={f.googleMapsUrl}
+            onChange={set('googleMapsUrl')}
+            placeholder="https://maps.app.goo.gl/…"
+          />
         </Field>
 
         <div className="rounded-2xl border border-line p-4">

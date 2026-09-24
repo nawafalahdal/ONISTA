@@ -1,19 +1,21 @@
 'use client'
 
 import { Fragment, useState } from 'react'
-import { CalendarDays } from 'lucide-react'
+import { CalendarDays, Truck } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import type { AdminOrder } from '@/server/queries/admin'
 import { updateDeliveryStatus, updateOrderStatus } from '@/server/actions/orders'
+import { assignDriver } from '@/server/actions/drivers'
 import Toast from '@/components/ui/toast'
 import { useAdminAction } from '@/hooks/use-admin-action'
 import { useToast } from '@/hooks/use-toast'
 import { formatSar } from '@/lib/money'
-import { DELIVERY_STATUSES, EmptyRow, ORDER_STATUSES, PageHeader, Panel, StatusSelect, Tabs, type DeliveryStatus, type OrderStatus } from './ui'
+import { DELIVERY_STATUSES, EmptyRow, ORDER_STATUSES, PageHeader, Panel, StatusPill, StatusSelect, Tabs, type DeliveryStatus, type OrderStatus } from './ui'
 
 type Filter = 'ALL' | OrderStatus
+type Driver = { id: string; name: string | null }
 
-export default function OrdersTable({ orders }: { orders: AdminOrder[] }) {
+export default function OrdersTable({ orders, drivers }: { orders: AdminOrder[]; drivers: Driver[] }) {
   const t = useTranslations('Admin')
   const format = useFormatter()
   const locale = useLocale() as 'ar' | 'en'
@@ -30,7 +32,7 @@ export default function OrdersTable({ orders }: { orders: AdminOrder[] }) {
       (!q || `ord-${o.orderNumber}`.includes(q) || o.cafe.cafeName.toLowerCase().includes(q) || o.cafe.contactPhone.includes(q)),
   )
   const statusLabel = (s: OrderStatus) => t(`OrderStatus.${s}`)
-  const deliveryLabel = (s: DeliveryStatus) => t(`DeliveryStatus.${s}`)
+  const deliveryLabel = (s: DeliveryStatus | 'RETURN_REQUESTED') => t(`DeliveryStatus.${s}`)
   const toggle = (id: string) => setExpanded((s) => (s.has(id) ? new Set([...s].filter((x) => x !== id)) : new Set(s).add(id)))
 
   return (
@@ -121,14 +123,36 @@ export default function OrdersTable({ orders }: { orders: AdminOrder[] }) {
                                   ))}
                                 </div>
                                 <span className="shrink-0 font-medium">{formatSar(d.subtotalHalalas, locale)}</span>
-                                <div onClick={(e) => e.stopPropagation()}>
-                                  <StatusSelect
-                                    value={d.status}
-                                    options={DELIVERY_STATUSES}
-                                    label={deliveryLabel}
+                                <div onClick={(e) => e.stopPropagation()} className="flex items-center gap-1.5">
+                                  <Truck size={13} className="shrink-0 text-muted" />
+                                  <select
+                                    value={d.assignedDriverId ?? ''}
                                     disabled={pending}
-                                    onChange={(status) => run(() => updateDeliveryStatus({ id: d.id, status }))}
-                                  />
+                                    onChange={(e) => run(() => assignDriver({ deliveryId: d.id, driverId: e.target.value || undefined }))}
+                                    className="rounded-full border border-line bg-transparent px-2.5 py-1 text-xs outline-none"
+                                  >
+                                    <option value="" className="bg-ink-2 text-cream">
+                                      {t('unassigned')}
+                                    </option>
+                                    {drivers.map((dr) => (
+                                      <option key={dr.id} value={dr.id} className="bg-ink-2 text-cream">
+                                        {dr.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div onClick={(e) => e.stopPropagation()}>
+                                  {d.status === 'RETURN_REQUESTED' ? (
+                                    <StatusPill tone="RETURN_REQUESTED">{deliveryLabel(d.status)}</StatusPill>
+                                  ) : (
+                                    <StatusSelect
+                                      value={d.status}
+                                      options={DELIVERY_STATUSES}
+                                      label={deliveryLabel}
+                                      disabled={pending}
+                                      onChange={(status) => run(() => updateDeliveryStatus({ id: d.id, status }))}
+                                    />
+                                  )}
                                 </div>
                               </li>
                             ))}

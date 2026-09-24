@@ -30,12 +30,52 @@ export async function getCafeOrders() {
         select: {
           id: true, deliveryDate: true, status: true, subtotalHalalas: true, addressSnapshot: true,
           items: { select: { id: true, titleSnapshot: true, quantity: true } },
+          returnRequest: { select: { id: true, reason: true, decision: true, createdAt: true } },
         },
       },
     },
   })
 }
 export type CafeOrder = Awaited<ReturnType<typeof getCafeOrders>>[number]
+
+/** Stat cards for the account dashboard: lifetime orders, spend, and what's still coming. */
+export async function getCafeOverview() {
+  const user = await requireCafePage()
+  const { todayISO } = await getSchedulingContext()
+  const [orderStats, upcomingCount] = await Promise.all([
+    db.order.aggregate({
+      where: { cafeId: user.cafeId, status: { not: 'CANCELLED' } },
+      _count: true,
+      _sum: { totalHalalas: true },
+    }),
+    db.delivery.count({
+      where: {
+        order: { cafeId: user.cafeId },
+        deliveryDate: { gte: new Date(`${todayISO}T00:00:00Z`) },
+        status: { notIn: ['CANCELLED', 'DELIVERED'] },
+      },
+    }),
+  ])
+  return {
+    totalOrders: orderStats._count,
+    totalSpentHalalas: orderStats._sum.totalHalalas ?? 0,
+    upcomingDeliveries: upcomingCount,
+  }
+}
+
+/** The café's own profile, incl. the Google Maps link the admin set at account creation. */
+export async function getCafeProfile() {
+  const user = await requireCafePage()
+  const profile = await db.cafeProfile.findUniqueOrThrow({
+    where: { id: user.cafeId },
+    select: {
+      cafeName: true, contactName: true, contactPhone: true, contactEmail: true, googleMapsUrl: true, createdAt: true,
+      addresses: { where: { archivedAt: null }, orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }] },
+    },
+  })
+  return profile
+}
+export type CafeProfileDetail = Awaited<ReturnType<typeof getCafeProfile>>
 
 /** Dashboard summary: next few upcoming deliveries across all orders. */
 export async function getUpcomingDeliveries(limit = 6) {

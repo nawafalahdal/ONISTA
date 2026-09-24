@@ -5,7 +5,9 @@ import { motion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 
 export const ORDER_STATUSES = ['PENDING_PAYMENT', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'] as const
-export const DELIVERY_STATUSES = ['SCHEDULED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'] as const
+// RETURN_REQUESTED is deliberately excluded: staff never pick it from this
+// dropdown, it's only set by a café filing a return (see Returns Manager).
+export const DELIVERY_STATUSES = ['PENDING', 'IN_PROGRESS', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'] as const
 export const TASTING_STATUSES = ['NEW', 'CONTACTED', 'SCHEDULED', 'CONVERTED', 'DECLINED'] as const
 export type OrderStatus = (typeof ORDER_STATUSES)[number]
 export type DeliveryStatus = (typeof DELIVERY_STATUSES)[number]
@@ -15,14 +17,15 @@ const TONE: Record<string, string> = {
   PENDING_PAYMENT: 'bg-rose-500/15 text-rose-600 ring-rose-500/30 dark:text-rose-300',
   NEW: 'bg-rose-500/15 text-rose-600 ring-rose-500/30 dark:text-rose-300',
   SCHEDULED: 'bg-sky-400/15 text-sky-700 ring-sky-400/30 dark:text-sky-300',
+  PENDING: 'bg-sky-400/15 text-sky-700 ring-sky-400/30 dark:text-sky-300',
   CONFIRMED: 'bg-amber-400/15 text-amber-700 ring-amber-400/30 dark:text-amber-300',
-  PREPARING: 'bg-amber-400/15 text-amber-700 ring-amber-400/30 dark:text-amber-300',
   CONTACTED: 'bg-amber-400/15 text-amber-700 ring-amber-400/30 dark:text-amber-300',
   IN_PROGRESS: 'bg-violet-400/15 text-violet-700 ring-violet-400/30 dark:text-violet-300',
   OUT_FOR_DELIVERY: 'bg-violet-400/15 text-violet-700 ring-violet-400/30 dark:text-violet-300',
   DELIVERED: 'bg-emerald-400/15 text-emerald-700 ring-emerald-400/30 dark:text-emerald-300',
   COMPLETED: 'bg-emerald-400/15 text-emerald-700 ring-emerald-400/30 dark:text-emerald-300',
   CONVERTED: 'bg-emerald-400/15 text-emerald-700 ring-emerald-400/30 dark:text-emerald-300',
+  RETURN_REQUESTED: 'bg-rose-500/15 text-rose-600 ring-rose-500/30 dark:text-rose-300',
   CANCELLED: 'bg-cream/5 text-muted ring-line',
   DECLINED: 'bg-cream/5 text-muted ring-line',
 }
@@ -58,6 +61,15 @@ export function StatusSelect<T extends string>({
       </select>
       <ChevronDown size={12} className="pointer-events-none absolute end-2.5" />
     </label>
+  )
+}
+
+/** Static, non-editable status pill — same look as StatusSelect, no <select>. */
+export function StatusPill({ tone, children }: { tone: string; children: ReactNode }) {
+  return (
+    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset ${TONE[tone] ?? TONE.CANCELLED}`}>
+      {children}
+    </span>
   )
 }
 

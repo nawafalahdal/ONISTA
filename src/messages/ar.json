@@ -95,7 +95,8 @@
     "back": "رجوع",
     "next": "التالي",
     "today": "اليوم",
-    "optional": "اختياري"
+    "optional": "اختياري",
+    "imageComingSoon": "صورة المنتج قريباً"
   },
   "Validation": {
     "required": "هذا الحقل مطلوب.",
@@ -142,7 +143,8 @@
       "dashboard": "الرئيسية",
       "schedule": "الجدول الأسبوعي",
       "orders": "الطلبات",
-      "addresses": "العناوين"
+      "addresses": "العناوين",
+      "profile": "الملف الشخصي"
     },
     "greeting": "أهلًا بك، {name}",
     "greetingSub": "إليك جدول التوصيل الخاص بك.",
@@ -199,7 +201,17 @@
       "typeOneOff": "مفرد",
       "typeWeekly": "جدول أسبوعي",
       "deliveries": "التوصيلات",
-      "viewDetails": "التفاصيل"
+      "viewDetails": "التفاصيل",
+      "requestReturn": "طلب استرجاع",
+      "returnPending": "طلب استرجاع قيد المراجعة",
+      "returnDecision": {
+        "APPROVED": "تمت الموافقة على الاسترجاع",
+        "REJECTED": "تم رفض الاسترجاع"
+      },
+      "returnReasonLabel": "ما الذي لم يطابق الاتفاق؟",
+      "returnReasonPh": "صف المشكلة…",
+      "returnSubmitted": "تم إرسال طلب الاسترجاع",
+      "submitReturn": "إرسال طلب الاسترجاع"
     },
     "Addresses": {
       "title": "عناوين التوصيل",
@@ -220,15 +232,29 @@
       "deliveryNotes": "ملاحظات التوصيل (اختياري)",
       "makeDefault": "اجعله العنوان الافتراضي",
       "save": "احفظ العنوان"
+    },
+    "Overview": {
+      "totalOrders": "إجمالي الطلبات",
+      "totalSpent": "إجمالي المصروف",
+      "upcoming": "توصيلات قادمة"
+    },
+    "Profile": {
+      "title": "الملف الشخصي",
+      "subtitle": "بيانات كافيهك المسجلة لدى أونيستا.",
+      "partnerSince": "شريك منذ",
+      "googleMapsLink": "افتح موقع التوصيل على خرائط جوجل"
     }
   },
   "Admin": {
     "backOffice": "لوحة الإدارة",
     "overview": "نظرة عامة",
     "orders": "الطلبات",
+    "kitchenSchedule": "جدول المطبخ",
+    "returns": "الاسترجاعات",
     "tasting": "طلبات التذوق",
     "products": "المنتجات",
     "clients": "العملاء",
+    "drivers": "السائقون",
     "settings": "الجدولة",
     "viewStorefront": "عرض المتجر",
     "signOut": "تسجيل الخروج",
@@ -386,10 +412,11 @@
       "CANCELLED": "ملغي"
     },
     "DeliveryStatus": {
-      "SCHEDULED": "مجدول",
-      "PREPARING": "قيد التحضير",
-      "OUT_FOR_DELIVERY": "خرج للتوصيل",
-      "DELIVERED": "تم التسليم",
+      "PENDING": "قيد المراجعة",
+      "IN_PROGRESS": "قيد العمل",
+      "OUT_FOR_DELIVERY": "خارج للتوصيل",
+      "DELIVERED": "تم التوصيل",
+      "RETURN_REQUESTED": "طلب استرجاع",
       "CANCELLED": "ملغي"
     },
     "Weekday": {
@@ -400,6 +427,52 @@
       "thu": "خميس",
       "fri": "جمعة",
       "sat": "سبت"
-    }
+    },
+    "googleMapsLink": "رابط خرائط جوجل",
+    "returnsTitle": "طلبات الاسترجاع",
+    "returnsSub": "طلبات قدمتها الكافيهات على طلبات تم توصيلها.",
+    "returnReason": "السبب",
+    "noReturns": "لا توجد طلبات استرجاع بعد.",
+    "approve": "موافقة",
+    "reject": "رفض",
+    "ReturnDecision": {
+      "PENDING": "قيد المراجعة",
+      "APPROVED": "تمت الموافقة",
+      "REJECTED": "مرفوض"
+    },
+    "kitchenScheduleTitle": "جدول المطبخ",
+    "kitchenScheduleSub": "كل توصيلات الكافيهات القادمة، مجمّعة للتخطيط للإنتاج.",
+    "noUpcomingDeliveries": "لا توجد توصيلات قادمة مجدولة.",
+    "productionTotals": "إجمالي الإنتاج",
+    "byCafe": "حسب الكافيه",
+    "deliveryCount": "{count, plural, one {# توصيلة} other {# توصيلات}}",
+    "driversTitle": "السائقون",
+    "driversSub": "حسابات سائقي التوصيل. لا يوجد تسجيل ذاتي — كل حساب يُنشأ من هنا.",
+    "newDriver": "سائق جديد",
+    "driverName": "اسم السائق",
+    "driverEmail": "بريد تسجيل الدخول",
+    "noDrivers": "لا يوجد سائقون بعد.",
+    "createDriverTitle": "حساب سائق جديد",
+    "createDriverSub": "يسجل الحساب الدخول بهذا البريد. شارك كلمة المرور مع السائق بنفسك — سيُطلب منه تغييرها عند أول دخول.",
+    "createDriver": "إنشاء حساب",
+    "driverCreated": "تم إنشاء حساب لـ {name}",
+    "unassigned": "غير معيّن"
+  },
+  "Driver": {
+    "portalTitle": "السائق",
+    "language": "English",
+    "signOut": "تسجيل خروج",
+    "signInTitle": "دخول السائق",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "signIn": "دخول",
+    "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+    "rateLimited": "محاولات كثيرة جدًا. حاول مرة أخرى خلال ١٥ دقيقة.",
+    "backToSite": "الرجوع إلى onista.sa",
+    "title": "توصيلات اليوم",
+    "subtitle": "{date}",
+    "empty": "لا توجد توصيلات معيّنة لك اليوم.",
+    "anyTime": "أي وقت",
+    "items": "الأصناف"
   }
 }

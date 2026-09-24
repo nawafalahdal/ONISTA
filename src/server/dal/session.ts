@@ -2,7 +2,16 @@ import 'server-only'
 import { cache } from 'react'
 import { notFound, redirect } from 'next/navigation'
 import { auth } from '@/auth'
-import { ACCOUNT_CHANGE_PASSWORD_PATH, ACCOUNT_LOGIN_PATH, ADMIN_LOGIN_PATH, isCafeRole, isStaffRole, type AppRole } from '@/config/security'
+import {
+  ACCOUNT_CHANGE_PASSWORD_PATH,
+  ACCOUNT_LOGIN_PATH,
+  ADMIN_LOGIN_PATH,
+  DRIVER_LOGIN_PATH,
+  isCafeRole,
+  isDriverRole,
+  isStaffRole,
+  type AppRole,
+} from '@/config/security'
 import { db } from '@/server/db'
 
 /** The only user shape that leaves the DAL (no hash, lockout or version fields). */
@@ -88,4 +97,22 @@ export async function getCafeUser(): Promise<CafeSessionUser | null> {
   const profile = await db.cafeProfile.findUnique({ where: { userId: user.id }, select: { id: true, cafeName: true } })
   if (!profile) return null
   return { ...user, cafeId: profile.id, cafeName: profile.cafeName }
+}
+
+/**
+ * For /driver: unauthenticated → driver login, authenticated non-driver
+ * → 404 (this area does not acknowledge that it exists to anyone else).
+ */
+export async function requireDriverPage(): Promise<SessionUser> {
+  const user = await getSessionUser()
+  if (!user) redirect(DRIVER_LOGIN_PATH)
+  if (!isDriverRole(user.role)) notFound()
+  return user
+}
+
+/** For Server Actions: returns null instead of redirecting so actions can respond. */
+export async function getDriverUser(): Promise<SessionUser | null> {
+  const user = await getSessionUser()
+  if (!user || !isDriverRole(user.role)) return null
+  return user
 }

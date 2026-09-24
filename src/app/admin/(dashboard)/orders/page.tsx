@@ -1,6 +1,7 @@
 import OrdersTable from '@/components/admin/orders-table'
-import { listOrders } from '@/server/queries/admin'
+import { listActiveDrivers, listOrders } from '@/server/queries/admin'
 
 export default async function OrdersPage() {
-  return <OrdersTable orders={await listOrders()} />
+  const [orders, drivers] = await Promise.all([listOrders(), listActiveDrivers()])
+  return <OrdersTable orders={orders} drivers={drivers} />
 }

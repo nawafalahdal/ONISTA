@@ -5,9 +5,12 @@ import { authConfig } from '@/auth/config'
 import {
   ACCOUNT_LOGIN_PATH,
   ADMIN_LOGIN_PATH,
+  DRIVER_LOGIN_PATH,
   isAccountPath,
   isAdminPath,
   isCafeRole,
+  isDriverPath,
+  isDriverRole,
   isStaffRole,
 } from '@/config/security'
 import { routing } from '@/i18n/routing'
@@ -28,7 +31,7 @@ import { routing } from '@/i18n/routing'
 const { auth } = NextAuth(authConfig)
 const handleI18n = createIntlMiddleware(routing)
 
-/** Optimistic gate shared by /admin (staff) and /account (café), which never overlap. */
+/** Optimistic gate shared by /admin (staff), /account (café) and /driver, which never overlap. */
 function gateArea(
   pathname: string,
   search: string,
@@ -74,6 +77,7 @@ export default auth((req) => {
 
   if (isAdminPath(pathname)) return gateArea(pathname, search, req.url, role, isAuthed, ADMIN_LOGIN_PATH, isStaffRole)
   if (isAccountPath(pathname)) return gateArea(pathname, search, req.url, role, isAuthed, ACCOUNT_LOGIN_PATH, isCafeRole)
+  if (isDriverPath(pathname)) return gateArea(pathname, search, req.url, role, isAuthed, DRIVER_LOGIN_PATH, isDriverRole)
   return handleI18n(req)
 })
 

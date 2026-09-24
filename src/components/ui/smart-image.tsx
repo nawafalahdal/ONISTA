@@ -2,11 +2,13 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
+import { useTranslations } from 'next-intl'
 import { LogoMark } from './logo'
 
 /**
  * next/image (served from our own origin, so the CSP stays img-src 'self')
- * that fades in on load and falls back to a branded placeholder on error.
+ * that fades in on load and falls back to a deliberate dark placeholder — a
+ * luxury "coming soon" treatment, never a broken image or stock photo.
  */
 export default function SmartImage({
   src,
@@ -21,6 +23,7 @@ export default function SmartImage({
   sizes?: string
   priority?: boolean
 }) {
+  const t = useTranslations('Common')
   const [status, setStatus] = useState<'loading' | 'loaded' | 'error'>(src ? 'loading' : 'error')
 
   return (
@@ -38,8 +41,9 @@ export default function SmartImage({
         />
       )}
       {status !== 'loaded' && (
-        <div className="absolute inset-0 grid place-items-center bg-[radial-gradient(circle_at_30%_20%,rgba(224,51,127,0.22),transparent_60%)]">
-          <LogoMark className={`h-1/3 w-auto text-rose-500/40 ${status === 'loading' ? 'animate-pulse' : ''}`} />
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[radial-gradient(circle_at_30%_20%,rgba(224,51,127,0.16),transparent_60%)]">
+          <LogoMark className={`h-1/4 w-auto text-rose-500/40 ${status === 'loading' ? 'animate-pulse' : ''}`} />
+          {status === 'error' && <span className="px-2 text-center text-[10px] tracking-[0.15em] text-cream/40 uppercase">{t('imageComingSoon')}</span>}
         </div>
       )}
     </div>

@@ -1,4 +1,5 @@
 import 'server-only'
+import { connection } from 'next/server'
 import { addDays, compareISO, dayOfWeek, riyadhNowParts } from '@/lib/date'
 import { db } from '@/server/db'
 
@@ -18,6 +19,9 @@ export type SchedulingContext = {
  * change these rules at any moment.
  */
 export async function getSchedulingContext(): Promise<SchedulingContext> {
+  // "Now" is inherently per-request; opt out of prerendering explicitly
+  // rather than relying on a caller's own dynamic API call to do it first.
+  await connection()
   const [settings, blackoutRows] = await Promise.all([
     db.schedulingSettings.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } }),
     db.blackoutDate.findMany({ select: { date: true } }),

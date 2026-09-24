@@ -40,10 +40,13 @@ enum Locale {
 /// STAFF: kitchen/operations (orders, deliveries, catalog); cannot create
 ///        or manage café accounts.
 /// CAFE:  a B2B client's storefront account. Can never reach /admin.
+/// DRIVER: sees only its own assigned deliveries for today, at /driver.
+///         Created by an admin, same as café accounts; never reaches /admin.
 enum Role {
   ADMIN
   STAFF
   CAFE
+  DRIVER
 }
 
 enum OrderType {
@@ -62,11 +65,18 @@ enum OrderStatus {
 }
 
 enum DeliveryStatus {
-  SCHEDULED
-  PREPARING
+  PENDING
+  IN_PROGRESS
   OUT_FOR_DELIVERY
   DELIVERED
+  RETURN_REQUESTED
   CANCELLED
+}
+
+enum ReturnDecision {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum PaymentMethod {
@@ -125,8 +135,11 @@ model User {
   createdBy    User?   @relation("UserCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   createdUsers User[]  @relation("UserCreatedBy")
 
-  cafe      CafeProfile?
-  auditLogs AuditLog[]
+  cafe               CafeProfile?
+  auditLogs          AuditLog[]
+  decidedReturns     ReturnRequest[]
+  /// DRIVER only: the deliveries an admin has assigned to this driver.
+  assignedDeliveries Delivery[]      @relation("DeliveryDriver")
 
   @@index([role, isActive])
 }
@@ -147,13 +160,17 @@ model CafeProfile {
   crNumber        String? @db.VarChar(20)
   internalNotes   String? @db.VarChar(1000) /// staff-only
   preferredLocale Locale  @default(ar)
+  /// Exact delivery location, e.g. a maps.google.com/goo.gl/maps link. Set by
+  /// the admin at account creation to streamline logistics.
+  googleMapsUrl   String? @db.VarChar(500)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  addresses     CafeAddress[]
-  orders        Order[]
-  convertedFrom TastingRequest[]
+  addresses      CafeAddress[]
+  orders         Order[]
+  convertedFrom  TastingRequest[]
+  returnRequests ReturnRequest[]
 }
 
 /// Saved delivery addresses (Saudi National Address format).
@@ -261,6 +278,9 @@ model ProductTranslation {
   title       String  @db.VarChar(120)
   description String  @db.VarChar(1000)
   badge       String? @db.VarChar(32)
+  /// Localized pack/size shown next to the price, e.g. "6 حبات" / "6 pieces",
+  /// "2.5 كيلو" / "2.5 kg", "الحبة" / "per piece".
+  unitLabel   String? @db.VarChar(40)
 
   @@unique([productId, locale])
 }
@@ -327,7 +347,7 @@ model Delivery {
   /// server-side against SchedulingSettings/BlackoutDate at order time).
   deliveryDate DateTime       @db.Date
   timeWindow   String?        @db.VarChar(20) /// e.g. "07:00-09:00"
-  status       DeliveryStatus @default(SCHEDULED)
+  status       DeliveryStatus @default(PENDING)
 
   addressId       String?
   address         CafeAddress? @relation(fields: [addressId], references: [id], onDelete: SetNull)
@@ -337,6 +357,10 @@ model Delivery {
   recipientName   String?      @db.VarChar(100)
   recipientPhone  String?      @db.VarChar(20)
 
+  /// The driver assigned to physically deliver this drop, if any.
+  assignedDriverId String?
+  assignedDriver   User?   @relation("DeliveryDriver", fields: [assignedDriverId], references: [id], onDelete: SetNull)
+
   subtotalHalalas Int
   deliveredAt     DateTime?
   staffNotes      String?   @db.VarChar(500)
@@ -344,10 +368,35 @@ model Delivery {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  items DeliveryItem[]
+  items         DeliveryItem[]
+  returnRequest ReturnRequest?
 
   @@unique([orderId, deliveryDate]) // at most one drop per day per order
   @@index([deliveryDate, status])
+  @@index([assignedDriverId, deliveryDate])
+}
+
+/// One return/refund claim against a delivered Delivery. Filed by the café,
+/// reviewed by an admin.
+model ReturnRequest {
+  id         String         @id @default(cuid())
+  deliveryId String         @unique // one open claim per delivery
+  delivery   Delivery       @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  cafeId     String
+  cafe       CafeProfile    @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+
+  reason     String         @db.VarChar(500) /// what didn't match the agreement
+  decision   ReturnDecision @default(PENDING)
+  adminNotes String?        @db.VarChar(500)
+
+  decidedById String?
+  decidedBy   User?     @relation(fields: [decidedById], references: [id], onDelete: SetNull)
+  decidedAt   DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([decision, createdAt])
+  @@index([cafeId, createdAt])
 }
 
 model DeliveryItem {

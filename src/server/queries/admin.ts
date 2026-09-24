@@ -11,11 +11,12 @@ const OPEN_ORDER = { notIn: ['COMPLETED', 'CANCELLED'] as ('COMPLETED' | 'CANCEL
 
 export async function getNavCounts() {
   await requireStaffPage()
-  const [pendingOrders, newRequests] = await Promise.all([
+  const [pendingOrders, newRequests, pendingReturns] = await Promise.all([
     db.order.count({ where: { status: 'PENDING_PAYMENT' } }),
     db.tastingRequest.count({ where: { status: 'NEW' } }),
+    db.returnRequest.count({ where: { decision: 'PENDING' } }),
   ])
-  return { newOrders: pendingOrders, newRequests }
+  return { newOrders: pendingOrders, newRequests, pendingReturns }
 }
 
 export async function getDashboardData() {
@@ -30,7 +31,7 @@ export async function getDashboardData() {
       db.product.count({ where: { archivedAt: null, inStock: true } }),
       db.cafeProfile.count(),
       db.delivery.findMany({
-        where: { status: { in: ['SCHEDULED', 'PREPARING'] } },
+        where: { status: { in: ['PENDING', 'IN_PROGRESS'] } },
         orderBy: { deliveryDate: 'asc' },
         take: 6,
         select: {
@@ -100,7 +101,7 @@ export async function listOrders() {
       deliveries: {
         orderBy: { deliveryDate: 'asc' },
         select: {
-          id: true, deliveryDate: true, status: true, subtotalHalalas: true, addressSnapshot: true,
+          id: true, deliveryDate: true, status: true, subtotalHalalas: true, addressSnapshot: true, assignedDriverId: true,
           items: { select: { id: true, titleSnapshot: true, quantity: true } },
         },
       },
@@ -163,7 +164,7 @@ export async function listCafes() {
   const rows = await db.cafeProfile.findMany({
     orderBy: { createdAt: 'desc' },
     select: {
-      id: true, cafeName: true, contactName: true, contactPhone: true, contactEmail: true, createdAt: true,
+      id: true, cafeName: true, contactName: true, contactPhone: true, contactEmail: true, googleMapsUrl: true, createdAt: true,
       user: { select: { isActive: true, lastLoginAt: true, mustChangePassword: true } },
       _count: { select: { orders: true } },
     },
@@ -174,6 +175,7 @@ export async function listCafes() {
     contactName: c.contactName,
     contactPhone: c.contactPhone,
     contactEmail: c.contactEmail,
+    googleMapsUrl: c.googleMapsUrl,
     createdAt: c.createdAt,
     isActive: c.user.isActive,
     lastLoginAt: c.user.lastLoginAt,
@@ -201,6 +203,100 @@ export async function getCafeDetail(id: string) {
   })
 }
 export type AdminCafeDetail = NonNullable<Awaited<ReturnType<typeof getCafeDetail>>>
+
+// ── Drivers ──────────────────────────────────────────────────────────────────
+
+export async function listDrivers() {
+  await requireStaffPage()
+  const rows = await db.user.findMany({
+    where: { role: 'DRIVER' },
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true, name: true, email: true, isActive: true, lastLoginAt: true, mustChangePassword: true, createdAt: true,
+      _count: { select: { assignedDeliveries: true } },
+    },
+  })
+  return rows.map((d) => ({
+    id: d.id,
+    name: d.name ?? '',
+    email: d.email ?? '',
+    isActive: d.isActive,
+    lastLoginAt: d.lastLoginAt,
+    mustChangePassword: d.mustChangePassword,
+    createdAt: d.createdAt,
+    deliveryCount: d._count.assignedDeliveries,
+  }))
+}
+export type AdminDriver = Awaited<ReturnType<typeof listDrivers>>[number]
+
+/** Active drivers, for the "assign a driver" dropdown on each delivery row. */
+export async function listActiveDrivers() {
+  await requireStaffPage()
+  return db.user.findMany({
+    where: { role: 'DRIVER', isActive: true },
+    orderBy: { name: 'asc' },
+    select: { id: true, name: true },
+  })
+}
+
+// ── Returns ──────────────────────────────────────────────────────────────────
+
+export async function listReturnRequests() {
+  await requireStaffPage()
+  return db.returnRequest.findMany({
+    orderBy: [{ decision: 'asc' }, { createdAt: 'desc' }],
+    take: 200,
+    select: {
+      id: true, reason: true, decision: true, adminNotes: true, decidedAt: true, createdAt: true,
+      cafe: { select: { cafeName: true, contactPhone: true } },
+      decidedBy: { select: { name: true } },
+      delivery: {
+        select: {
+          id: true, deliveryDate: true, subtotalHalalas: true,
+          order: { select: { orderNumber: true } },
+          items: { select: { id: true, titleSnapshot: true, quantity: true } },
+        },
+      },
+    },
+  })
+}
+export type AdminReturnRequest = Awaited<ReturnType<typeof listReturnRequests>>[number]
+
+// ── Kitchen schedule (combined across every café) ───────────────────────────
+
+/** Every open delivery from `fromISO` onward, for kitchen prep planning. */
+export async function getKitchenSchedule(fromISO: string) {
+  await requireStaffPage()
+  const deliveries = await db.delivery.findMany({
+    where: { deliveryDate: { gte: new Date(`${fromISO}T00:00:00Z`) }, status: { notIn: ['CANCELLED'] } },
+    orderBy: { deliveryDate: 'asc' },
+    select: {
+      id: true, deliveryDate: true, status: true,
+      order: { select: { orderNumber: true, type: true, cafe: { select: { cafeName: true } } } },
+      items: { select: { id: true, titleSnapshot: true, quantity: true } },
+    },
+  })
+
+  const byDate = new Map<string, typeof deliveries>()
+  for (const d of deliveries) {
+    const key = d.deliveryDate.toISOString().slice(0, 10)
+    if (!byDate.has(key)) byDate.set(key, [])
+    byDate.get(key)!.push(d)
+  }
+
+  return Array.from(byDate.entries()).map(([date, dayDeliveries]) => {
+    const productTotals = new Map<string, number>()
+    for (const d of dayDeliveries) {
+      for (const item of d.items) productTotals.set(item.titleSnapshot, (productTotals.get(item.titleSnapshot) ?? 0) + item.quantity)
+    }
+    return {
+      date,
+      deliveries: dayDeliveries,
+      productTotals: Array.from(productTotals.entries()).map(([title, quantity]) => ({ title, quantity })).sort((a, b) => b.quantity - a.quantity),
+    }
+  })
+}
+export type KitchenScheduleDay = Awaited<ReturnType<typeof getKitchenSchedule>>[number]
 
 // ── Scheduling settings ─────────────────────────────────────────────────────
 

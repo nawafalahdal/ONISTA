@@ -95,7 +95,8 @@
     "back": "Back",
     "next": "Next",
     "today": "Today",
-    "optional": "optional"
+    "optional": "optional",
+    "imageComingSoon": "Image coming soon"
   },
   "Validation": {
     "required": "This field is required.",
@@ -142,7 +143,8 @@
       "dashboard": "Dashboard",
       "schedule": "Weekly schedule",
       "orders": "Orders",
-      "addresses": "Addresses"
+      "addresses": "Addresses",
+      "profile": "Profile"
     },
     "greeting": "Welcome back, {name}",
     "greetingSub": "Here's your delivery schedule at a glance.",
@@ -199,7 +201,17 @@
       "typeOneOff": "One-off",
       "typeWeekly": "Weekly schedule",
       "deliveries": "Deliveries",
-      "viewDetails": "Details"
+      "viewDetails": "Details",
+      "requestReturn": "Request a return",
+      "returnPending": "Return requested",
+      "returnDecision": {
+        "APPROVED": "Return approved",
+        "REJECTED": "Return rejected"
+      },
+      "returnReasonLabel": "What didn't match the agreement?",
+      "returnReasonPh": "Describe the issue…",
+      "returnSubmitted": "Return request submitted",
+      "submitReturn": "Submit return request"
     },
     "Addresses": {
       "title": "Delivery addresses",
@@ -220,15 +232,29 @@
       "deliveryNotes": "Delivery notes (optional)",
       "makeDefault": "Set as default address",
       "save": "Save address"
+    },
+    "Overview": {
+      "totalOrders": "Total orders",
+      "totalSpent": "Total spent",
+      "upcoming": "Upcoming deliveries"
+    },
+    "Profile": {
+      "title": "Profile",
+      "subtitle": "Your business details on file with Onista.",
+      "partnerSince": "Partner since",
+      "googleMapsLink": "Open delivery location on Google Maps"
     }
   },
   "Admin": {
     "backOffice": "Back office",
     "overview": "Overview",
     "orders": "Orders",
+    "kitchenSchedule": "Kitchen schedule",
+    "returns": "Returns",
     "tasting": "Tasting requests",
     "products": "Products",
     "clients": "Clients",
+    "drivers": "Drivers",
     "settings": "Scheduling",
     "viewStorefront": "View storefront",
     "signOut": "Sign out",
@@ -386,10 +412,11 @@
       "CANCELLED": "Cancelled"
     },
     "DeliveryStatus": {
-      "SCHEDULED": "Scheduled",
-      "PREPARING": "Preparing",
+      "PENDING": "Pending review",
+      "IN_PROGRESS": "In progress",
       "OUT_FOR_DELIVERY": "Out for delivery",
       "DELIVERED": "Delivered",
+      "RETURN_REQUESTED": "Return requested",
       "CANCELLED": "Cancelled"
     },
     "Weekday": {
@@ -400,6 +427,52 @@
       "thu": "Thu",
       "fri": "Fri",
       "sat": "Sat"
-    }
+    },
+    "googleMapsLink": "Google Maps link",
+    "returnsTitle": "Return requests",
+    "returnsSub": "Claims filed by cafés against delivered orders.",
+    "returnReason": "Reason",
+    "noReturns": "No return requests here yet.",
+    "approve": "Approve",
+    "reject": "Reject",
+    "ReturnDecision": {
+      "PENDING": "Pending",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected"
+    },
+    "kitchenScheduleTitle": "Kitchen schedule",
+    "kitchenScheduleSub": "Every café’s upcoming deliveries, combined for production planning.",
+    "noUpcomingDeliveries": "No upcoming deliveries scheduled.",
+    "productionTotals": "Production totals",
+    "byCafe": "By café",
+    "deliveryCount": "{count, plural, one {# delivery} other {# deliveries}}",
+    "driversTitle": "Drivers",
+    "driversSub": "Delivery driver accounts. There is no self-service sign-up — every account is created here.",
+    "newDriver": "New driver",
+    "driverName": "Driver name",
+    "driverEmail": "Login email",
+    "noDrivers": "No driver accounts yet.",
+    "createDriverTitle": "New driver account",
+    "createDriverSub": "The account signs in with this email. Share the password with the driver yourself — they’ll be asked to change it on first sign-in.",
+    "createDriver": "Create account",
+    "driverCreated": "Account created for {name}",
+    "unassigned": "Unassigned"
+  },
+  "Driver": {
+    "portalTitle": "Driver",
+    "language": "العربية",
+    "signOut": "Sign out",
+    "signInTitle": "Driver sign-in",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "invalidCredentials": "Incorrect email or password.",
+    "rateLimited": "Too many attempts. Try again in 15 minutes.",
+    "backToSite": "Back to onista.sa",
+    "title": "Today's deliveries",
+    "subtitle": "{date}",
+    "empty": "No deliveries assigned to you today.",
+    "anyTime": "Any time",
+    "items": "Items"
   }
 }

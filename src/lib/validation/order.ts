@@ -45,5 +45,5 @@ export const orderStatusSchema = z.object({
 
 export const deliveryStatusSchema = z.object({
   id,
-  status: z.enum(['SCHEDULED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'], { error: MSG.invalid }),
+  status: z.enum(['PENDING', 'IN_PROGRESS', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'], { error: MSG.invalid }),
 })
