@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #0c0a0b;
+  --color-ink-2: #141113;
+  --color-ink-3: #1c181a;
+  --color-line: #2a2427;
+  --color-cream: #f4ece4;
+  --color-muted: #a39a95;
+  --color-rose-50: #fdf0f6;
+  --color-rose-300: #f38ab8;
+  --color-rose-400: #ec5a9a;
+  --color-rose-500: #e0337f;
+  --color-rose-600: #c8106e;
+  --color-rose-700: #9e0c57;
+  --color-gold: #d8b98a;
+
+  --font-display: "Cormorant Garamond", ui-serif, Georgia, serif;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-arabic: "Tajawal", "Manrope", sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    @apply bg-ink text-cream font-sans;
+    min-height: 100vh;
+  }
+  ::selection {
+    @apply bg-rose-600 text-white;
+  }
+  [dir="rtl"] {
+    font-family: var(--font-arabic);
+  }
+  input, select, textarea, button {
+    font: inherit;
+  }
+}
+
+@layer components {
+  .eyebrow {
+    @apply text-[11px] uppercase tracking-[0.32em] text-rose-400;
+  }
+  .field {
+    @apply w-full rounded-xl border border-line bg-ink-2 px-4 py-3 text-sm text-cream placeholder:text-muted/60 outline-none transition focus:border-rose-500/70 focus:ring-2 focus:ring-rose-500/20;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-rose-600 px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_40px_-10px_rgba(200,16,110,0.7)] transition hover:bg-rose-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-medium text-cream transition hover:border-rose-500/60 hover:text-white;
+  }
+  .grain::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
