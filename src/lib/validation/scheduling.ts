@@ -14,6 +14,7 @@ export const schedulingSettingsSchema = z.object({
   deliveryFeeWeekHalalas: z.coerce.number().min(0).max(10_000).transform(sarToHalalas),
   deliveryFeeBiweekHalalas: z.coerce.number().min(0).max(10_000).transform(sarToHalalas),
   deliveryFeeMonthHalalas: z.coerce.number().min(0).max(10_000).transform(sarToHalalas),
+  tastingExtraFeeHalalas: z.coerce.number().min(0).max(10_000).transform(sarToHalalas),
 })
 export type SchedulingSettingsInput = z.input<typeof schedulingSettingsSchema>
 

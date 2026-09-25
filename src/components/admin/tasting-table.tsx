@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import { Building2, MapPin, MessageCircle } from 'lucide-react'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import type { AdminTastingRequest } from '@/server/queries/admin'
 import { updateTastingRequestStatus } from '@/server/actions/tasting-requests'
+import { formatSar } from '@/lib/money'
 import Toast from '@/components/ui/toast'
 import { useAdminAction } from '@/hooks/use-admin-action'
 import { useToast } from '@/hooks/use-toast'
@@ -26,6 +27,7 @@ function replyLink(r: AdminTastingRequest) {
 export default function TastingTable({ requests }: { requests: AdminTastingRequest[] }) {
   const t = useTranslations('Admin')
   const format = useFormatter()
+  const locale = useLocale() as 'ar' | 'en'
   const { toast, notify } = useToast()
   const { run, pending } = useAdminAction(notify)
   const [filter, setFilter] = useState<Filter>('ALL')
@@ -89,6 +91,11 @@ export default function TastingTable({ requests }: { requests: AdminTastingReque
                         </span>
                       ))}
                     </div>
+                    {r.extraSamplesCount > 0 && (
+                      <p className="mt-2 text-xs font-medium text-rose-600 dark:text-rose-300">
+                        {t('tastingExtras', { count: r.extraSamplesCount, amount: formatSar(r.extraFeeHalalas, locale) })}
+                      </p>
+                    )}
                     {r.notes && <p className="mt-2 text-xs text-muted italic">“{r.notes}”</p>}
                   </td>
                   <td className="px-5 py-4 align-top">

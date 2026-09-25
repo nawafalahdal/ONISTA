@@ -1,7 +1,10 @@
 import { z } from 'zod'
 import { MSG, email, id, localeSchema, optional, phone, text } from './common'
 
-export const MAX_TASTING_ITEMS = 3
+/** Samples included at no charge; anything beyond this is billed per extra sample. */
+export const MAX_TASTING_ITEMS_FREE = 3
+/** Hard cap on a single tasting box, free and paid samples combined. */
+export const MAX_TASTING_ITEMS = 8
 
 export const tastingRequestSchema = z.object({
   cafeName: text({ min: 2, max: 100 }),

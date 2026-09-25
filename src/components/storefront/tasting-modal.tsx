@@ -6,7 +6,8 @@ import { Check, Copy, Loader2, MessageCircle, Send } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import type { CatalogProduct } from '@/server/queries/catalog'
 import { submitTastingRequest } from '@/server/actions/tasting-requests'
-import { MAX_TASTING_ITEMS } from '@/lib/validation/tasting-request'
+import { MAX_TASTING_ITEMS, MAX_TASTING_ITEMS_FREE } from '@/lib/validation/tasting-request'
+import { formatSar } from '@/lib/money'
 import { CloseButton, Modal } from '@/components/ui/overlay'
 import SmartImage from '@/components/ui/smart-image'
 
@@ -17,14 +18,16 @@ export default function TastingModal({
   open,
   onClose,
   menu,
+  extraFeeHalalas,
 }: {
   open: boolean
   onClose: () => void
   menu: CatalogProduct[]
+  extraFeeHalalas: number
 }) {
   const t = useTranslations('Tasting')
   const tv = useTranslations('Validation')
-  const locale = useLocale()
+  const locale = useLocale() as 'ar' | 'en'
 
   const [selected, setSelected] = useState<string[]>([])
   const [form, setForm] = useState(emptyForm)
@@ -37,6 +40,11 @@ export default function TastingModal({
 
   const toggle = (id: string) =>
     setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : s.length < MAX_TASTING_ITEMS ? [...s, id] : s))
+
+  // The first few samples are on us; past that each one adds the admin-set fee.
+  const extraCount = Math.max(0, selected.length - MAX_TASTING_ITEMS_FREE)
+  const extraTotalHalalas = extraCount * extraFeeHalalas
+  const nextIsPaid = selected.length >= MAX_TASTING_ITEMS_FREE
 
   const close = () => {
     onClose()
@@ -120,6 +128,9 @@ export default function TastingModal({
                   {selected.length}/{MAX_TASTING_ITEMS}
                 </span>
               </div>
+              <p className="mt-1 text-xs text-muted">
+                {t('freeNote', { count: MAX_TASTING_ITEMS_FREE, amount: formatSar(extraFeeHalalas, locale) })}
+              </p>
               {menu.length === 0 ? (
                 <p className="mt-3 rounded-xl border border-dashed border-line p-4 text-sm text-muted">{t('emptyMenu')}</p>
               ) : (
@@ -127,6 +138,7 @@ export default function TastingModal({
                   {menu.map((p) => {
                     const on = selected.includes(p.id)
                     const disabled = !on && selected.length >= MAX_TASTING_ITEMS
+                    const showsPrice = !on && !disabled && nextIsPaid
                     return (
                       <motion.button
                         type="button"
@@ -142,7 +154,9 @@ export default function TastingModal({
                         <SmartImage src={p.images[0]?.url} alt="" className="aspect-[4/3]" sizes="200px" />
                         <div className="p-3">
                           <p className="text-[13px] leading-tight font-medium">{p.title}</p>
-                          <p className="mt-0.5 text-[11px] text-muted">{p.category.name}</p>
+                          <p className="mt-0.5 text-[11px] text-muted">
+                            {showsPrice ? `+${formatSar(extraFeeHalalas, locale)}` : p.category.name}
+                          </p>
                         </div>
                         <span
                           className={`absolute end-2 top-2 grid h-6 w-6 place-items-center rounded-full border transition ${
@@ -155,6 +169,11 @@ export default function TastingModal({
                     )
                   })}
                 </div>
+              )}
+              {extraCount > 0 && (
+                <p className="mt-3 rounded-xl bg-rose-600/10 p-3 text-xs text-rose-600 dark:text-rose-300">
+                  {t('extraFeeNote', { count: extraCount, amount: formatSar(extraTotalHalalas, locale) })}
+                </p>
               )}
               {err('productIds') && <p className="mt-2 text-xs text-rose-500">{err('productIds')}</p>}
             </div>

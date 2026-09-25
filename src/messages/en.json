@@ -40,7 +40,7 @@
     "eyebrow": "Start a partnership",
     "title": "Request a tasting box",
     "subtitle": "For cafés evaluating Onista",
-    "body": "Before you commit to a weekly schedule, taste the range. Tell us which pieces you'd like to sample and our wholesale team will confirm a complimentary tasting box over WhatsApp, usually within the hour — then we'll set up your partner account.",
+    "body": "Before you commit to a weekly schedule, taste the range. Tell us which pieces you'd like to sample — the first 3 are free and you can add more for a small fee — and our wholesale team will confirm your tasting box over WhatsApp, usually within the hour, then we'll set up your partner account.",
     "cta": "Request a tasting box",
     "perk1Title": "A curated sample box",
     "perk1Text": "Up to three items from the wholesale menu, boxed for your team to taste.",
@@ -51,7 +51,7 @@
     "fab": "Request a tasting box",
     "fabSub": "New partnership",
     "modalEyebrow": "New partnership",
-    "modalSubtitle": "Request a complimentary tasting box",
+    "modalSubtitle": "First 3 samples free, add more for a small fee",
     "chooseSamples": "Choose samples",
     "emptyMenu": "The tasting menu is being refreshed. Please check back soon.",
     "cafeName": "Café name",
@@ -69,7 +69,9 @@
     "generatedLink": "Generated link",
     "openWhatsapp": "Open WhatsApp",
     "copy": "Copy link",
-    "copied": "Copied"
+    "copied": "Copied",
+    "freeNote": "The first {count} samples are free, each extra one is {amount}.",
+    "extraFeeNote": "{count, plural, one {# extra sample} other {# extra samples}} · {amount} added to your request."
   },
   "Footer": {
     "tagline": "A dedicated wholesale kitchen supplying signature cakes and pastry to Jeddah's best cafés, on a fixed weekly schedule.",
@@ -484,7 +486,10 @@
     "contentStatSince": "Serving since (year)",
     "contentStatCafes": "Partner cafés",
     "contentStatOnTime": "On-time delivery rate",
-    "contentSaved": "Site content saved"
+    "contentSaved": "Site content saved",
+    "tastingExtraFee": "Extra sample fee (SAR)",
+    "tastingExtraFeeHint": "The first 3 samples are always free; this is the price of each additional sample.",
+    "tastingExtras": "{count, plural, one {# extra sample} other {# extra samples}} · {amount}"
   },
   "Driver": {
     "portalTitle": "Driver",

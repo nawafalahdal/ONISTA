@@ -3,7 +3,7 @@
 import { env } from '@/env'
 import { fail, ok, type ActionResult } from '@/lib/action-result'
 import { fieldErrors } from '@/lib/validation/common'
-import { tastingNotesSchema, tastingRequestSchema, tastingStatusSchema } from '@/lib/validation/tasting-request'
+import { MAX_TASTING_ITEMS_FREE, tastingNotesSchema, tastingRequestSchema, tastingStatusSchema } from '@/lib/validation/tasting-request'
 import { buildTastingWhatsAppUrl } from '@/lib/whatsapp'
 import { db } from '@/server/db'
 import { guardStaffAction } from '@/server/dal/guard'
@@ -51,11 +51,19 @@ export async function submitTastingRequest(_prev: TastingSubmitResult | null, fo
     return fail('unavailableSamples', { productIds: ['unavailableSamples'] })
   }
 
+  // 6. Anything past the free allowance is billed at the live admin-set rate —
+  //    never at a price the client could have sent us.
+  const settings = await db.schedulingSettings.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } })
+  const extraSamplesCount = Math.max(0, products.length - MAX_TASTING_ITEMS_FREE)
+  const extraFeeHalalas = extraSamplesCount * settings.tastingExtraFeeHalalas
+
   const request = await db.tastingRequest.create({
     data: {
       ...contact,
       locale,
       ipHash: hashIp(ip),
+      extraSamplesCount,
+      extraFeeHalalas,
       selectedProducts: {
         create: products.map((p) => ({ productId: p.id, titleSnapshot: p.translations[0]!.title })),
       },
@@ -63,10 +71,12 @@ export async function submitTastingRequest(_prev: TastingSubmitResult | null, fo
     select: { requestNumber: true, cafeName: true, phone: true, city: true, notes: true },
   })
 
-  // 6. The WhatsApp link is built server-side from validated, stored data.
+  // 7. The WhatsApp link is built server-side from validated, stored data.
   const whatsappUrl = buildTastingWhatsAppUrl(env.BUSINESS_WHATSAPP_NUMBER, {
     ...request,
     items: products.map((p) => p.translations[0]!.title),
+    extraSamplesCount,
+    extraFeeHalalas,
   })
   return ok({ requestNumber: request.requestNumber, whatsappUrl })
 }

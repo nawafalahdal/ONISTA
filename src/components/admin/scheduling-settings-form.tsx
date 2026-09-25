@@ -21,6 +21,7 @@ type Settings = {
   deliveryFeeWeekHalalas: number
   deliveryFeeBiweekHalalas: number
   deliveryFeeMonthHalalas: number
+  tastingExtraFeeHalalas: number
 }
 type Blackout = { date: Date; reasonAr: string | null; reasonEn: string | null }
 
@@ -38,6 +39,7 @@ export default function SchedulingSettingsForm({ settings, blackouts }: { settin
     deliveryFeeWeekHalalas: String(halalasToSar(settings.deliveryFeeWeekHalalas)),
     deliveryFeeBiweekHalalas: String(halalasToSar(settings.deliveryFeeBiweekHalalas)),
     deliveryFeeMonthHalalas: String(halalasToSar(settings.deliveryFeeMonthHalalas)),
+    tastingExtraFeeHalalas: String(halalasToSar(settings.tastingExtraFeeHalalas)),
   })
 
   const toggleDay = (d: number) =>
@@ -59,6 +61,7 @@ export default function SchedulingSettingsForm({ settings, blackouts }: { settin
           deliveryFeeWeekHalalas: f.deliveryFeeWeekHalalas,
           deliveryFeeBiweekHalalas: f.deliveryFeeBiweekHalalas,
           deliveryFeeMonthHalalas: f.deliveryFeeMonthHalalas,
+          tastingExtraFeeHalalas: f.tastingExtraFeeHalalas,
         }),
       t('settingsSaved'),
     )
@@ -106,6 +109,11 @@ export default function SchedulingSettingsForm({ settings, blackouts }: { settin
             </div>
             <span className="mt-1 block text-[11px] text-muted/80">{t('deliveryFeeTiersHint')}</span>
           </div>
+          <label className="block">
+            <span className="mb-1.5 block text-xs text-muted">{t('tastingExtraFee')}</span>
+            <input className="field" dir="ltr" type="number" min={0} step={0.5} value={f.tastingExtraFeeHalalas} onChange={(e) => setF((p) => ({ ...p, tastingExtraFeeHalalas: e.target.value }))} />
+            <span className="mt-1 block text-[11px] text-muted/80">{t('tastingExtraFeeHint')}</span>
+          </label>
           <div className="sm:col-span-2">
             <span className="mb-2 block text-xs text-muted">{t('deliveryWeekdays')}</span>
             <div className="flex flex-wrap gap-2" dir="ltr">

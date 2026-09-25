@@ -118,6 +118,7 @@ export async function listTastingRequests() {
     select: {
       id: true, requestNumber: true, status: true, cafeName: true, contactName: true, phone: true,
       email: true, city: true, notes: true, staffNotes: true, locale: true, createdAt: true,
+      extraSamplesCount: true, extraFeeHalalas: true,
       selectedProducts: { select: { productId: true, titleSnapshot: true } },
     },
   })

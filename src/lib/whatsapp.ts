@@ -1,3 +1,5 @@
+import { formatSar } from './money'
+
 type TastingMessage = {
   requestNumber: number
   cafeName: string
@@ -5,6 +7,8 @@ type TastingMessage = {
   city?: string | null
   notes?: string | null
   items: string[]
+  extraSamplesCount: number
+  extraFeeHalalas: number
 }
 
 /** Builds the wa.me deep link sent after a tasting request — branded, warm, WhatsApp-formatted. */
@@ -20,6 +24,9 @@ export function buildTastingWhatsAppUrl(businessNumber: string, m: TastingMessag
     '',
     '🍰 *الأصناف المطلوبة للتذوق:*',
     ...m.items.map((title, i) => `${i + 1}. ${title}`),
+    ...(m.extraSamplesCount > 0
+      ? ['', `➕ *عينات إضافية:* ${m.extraSamplesCount}`, `💳 *رسوم العينات الإضافية:* ${formatSar(m.extraFeeHalalas, 'ar')}`]
+      : []),
     ...(m.notes ? ['', `📝 *ملاحظات:* ${m.notes}`] : []),
     '',
     'راح نجهّز لكم صندوق التذوق ونأكد معكم موعد التوصيل قريباً 🌸',

@@ -31,10 +31,12 @@ type SiteContent = {
 export default function Storefront({
   products,
   cutoffHour,
+  tastingExtraFeeHalalas,
   content,
 }: {
   products: CatalogProduct[]
   cutoffHour: number
+  tastingExtraFeeHalalas: number
   content: SiteContent
 }) {
   const [tastingOpen, setTastingOpen] = useState(false)
@@ -52,7 +54,12 @@ export default function Storefront({
       <Footer cutoffHour={cutoffHour} />
 
       <TastingFab onClick={() => setTastingOpen(true)} hidden={tastingOpen} />
-      <TastingModal open={tastingOpen} onClose={() => setTastingOpen(false)} menu={tastingMenu} />
+      <TastingModal
+        open={tastingOpen}
+        onClose={() => setTastingOpen(false)}
+        menu={tastingMenu}
+        extraFeeHalalas={tastingExtraFeeHalalas}
+      />
     </div>
   )
 }

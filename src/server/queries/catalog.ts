@@ -11,13 +11,13 @@ export const TAGS = {
   siteContent: 'site-content',
 } as const
 
-/** The one scheduling fact the public storefront shows (footer cut-off note). */
-export async function getPublicCutoffHour(): Promise<number> {
+/** The scheduling facts the public storefront shows (footer cut-off note, extra-sample price). */
+export async function getPublicSettings() {
   'use cache'
   cacheTag(TAGS.scheduling)
   cacheLife('hours')
   const settings = await db.schedulingSettings.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } })
-  return settings.cutoffHour
+  return { cutoffHour: settings.cutoffHour, tastingExtraFeeHalalas: settings.tastingExtraFeeHalalas }
 }
 
 const SITE_CONTENT_DEFAULTS = {
