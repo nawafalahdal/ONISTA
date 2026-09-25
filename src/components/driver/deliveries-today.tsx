@@ -34,7 +34,7 @@ export default function DeliveriesToday({
 
       <dl className="grid grid-cols-3 gap-3">
         <Stat icon={<CheckCircle2 size={16} />} label={t('statCompleted')} value={String(stats.completedCount)} />
-        <Stat icon={<Package size={16} />} label={t('statRemaining')} value={String(stats.remainingCount)} />
+        <Stat icon={<Package size={16} />} label={t('statRemaining')} value={String(deliveries.length)} />
         <Stat icon={<Wallet size={16} />} label={t('statEarnings')} value={formatSar(stats.earningsHalalas, locale)} highlight />
       </dl>
 
@@ -53,8 +53,9 @@ export default function DeliveriesToday({
                     <p className="font-semibold" dir="ltr">
                       {d.timeWindow ?? t('anyTime')}
                     </p>
-                    <p className="text-xs text-muted" dir="ltr">
-                      ORD-{d.order.orderNumber}
+                    <p className="text-xs text-muted">
+                      <span dir="ltr">ORD-{d.order.orderNumber}</span> ·{' '}
+                      {format.dateTime(d.deliveryDate, { weekday: 'short', day: '2-digit', month: 'short' })}
                     </p>
                   </div>
                 </div>

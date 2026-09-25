@@ -5,21 +5,9 @@ import { fieldErrors } from '@/lib/validation/common'
 import { deliveryConfirmSchema, deliveryPickupSchema } from '@/lib/validation/driver-delivery'
 import { db } from '@/server/db'
 import { guardDriverAction } from '@/server/dal/guard'
+import { syncOrderStatus } from '@/server/order-status'
 import { audit } from '@/server/security/audit'
 import { rateLimit } from '@/server/security/rate-limit'
-
-/**
- * Rolls the order forward when its drops move, so the café and the admin see
- * the same state without anyone updating it by hand.
- */
-async function syncOrderStatus(orderId: string) {
-  const siblings = await db.delivery.findMany({ where: { orderId }, select: { status: true } })
-  if (siblings.every((s) => s.status === 'DELIVERED')) {
-    await db.order.updateMany({ where: { id: orderId, status: { not: 'CANCELLED' } }, data: { status: 'COMPLETED' } })
-  } else {
-    await db.order.updateMany({ where: { id: orderId, status: 'CONFIRMED' }, data: { status: 'IN_PROGRESS' } })
-  }
-}
 
 /**
  * DRIVER: collect a drop from the kitchen. The write is scoped to a delivery

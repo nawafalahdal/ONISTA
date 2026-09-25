@@ -7,6 +7,7 @@ import { deliveryStatusSchema, oneOffOrderSchema, orderStatusSchema, weeklySched
 import { db } from '@/server/db'
 import { guardCafeAction, guardStaffAction } from '@/server/dal/guard'
 import { buildOrder, type BuildOrderError } from '@/server/order-builder'
+import { syncOrderStatus } from '@/server/order-status'
 import { audit } from '@/server/security/audit'
 import { rateLimit } from '@/server/security/rate-limit'
 
@@ -113,16 +114,8 @@ export async function updateDeliveryStatus(input: unknown): Promise<ActionResult
   })
   if (count === 0) return fail('notFound')
 
-  // If every delivery on the order is now DELIVERED, mark the order COMPLETED.
   const delivery = await db.delivery.findUnique({ where: { id }, select: { orderId: true } })
-  if (delivery) {
-    const siblings = await db.delivery.findMany({ where: { orderId: delivery.orderId }, select: { status: true } })
-    if (siblings.every((s) => s.status === 'DELIVERED')) {
-      await db.order.updateMany({ where: { id: delivery.orderId, status: { not: 'CANCELLED' } }, data: { status: 'COMPLETED' } })
-    } else if (siblings.some((s) => s.status === 'OUT_FOR_DELIVERY' || s.status === 'DELIVERED' || s.status === 'IN_PROGRESS')) {
-      await db.order.updateMany({ where: { id: delivery.orderId, status: 'CONFIRMED' }, data: { status: 'IN_PROGRESS' } })
-    }
-  }
+  if (delivery) await syncOrderStatus(delivery.orderId)
 
   await audit({ actorId: user.id, action: 'delivery.status', entityType: 'Delivery', entityId: id, metadata: { status } })
   return ok({ id })
