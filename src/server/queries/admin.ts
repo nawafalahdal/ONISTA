@@ -101,7 +101,7 @@ export async function listOrders() {
       deliveries: {
         orderBy: { deliveryDate: 'asc' },
         select: {
-          id: true, deliveryDate: true, status: true, subtotalHalalas: true, addressSnapshot: true, assignedDriverId: true,
+          id: true, deliveryDate: true, timeWindow: true, status: true, subtotalHalalas: true, addressSnapshot: true, assignedDriverId: true,
           items: { select: { id: true, titleSnapshot: true, quantity: true } },
         },
       },

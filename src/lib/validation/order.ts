@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { DELIVERY_WINDOWS } from '@/lib/constants'
 import { MSG, id, isoDate, localeSchema, optional, text } from './common'
 
 export const MAX_QTY_PER_LINE = 200
@@ -11,10 +12,12 @@ const dayItem = z.object({
 })
 
 const paymentMethod = z.enum(['CARD', 'APPLE_PAY', 'BANK_TRANSFER'], { error: MSG.invalid })
+const timeWindow = z.enum(DELIVERY_WINDOWS, { error: MSG.invalid })
 
 /** A standard, single-date order (still requires a café login — see requireCafePage). */
 export const oneOffOrderSchema = z.object({
   deliveryDate: isoDate,
+  timeWindow,
   addressId: id,
   items: z.array(dayItem).min(1, { error: MSG.required }).max(MAX_LINES_PER_DAY),
   paymentMethod,
@@ -28,7 +31,7 @@ export const weeklyScheduleSchema = z.object({
   weekStartDate: isoDate,
   addressId: id,
   days: z
-    .array(z.object({ deliveryDate: isoDate, items: z.array(dayItem).min(1, { error: MSG.required }).max(MAX_LINES_PER_DAY) }))
+    .array(z.object({ deliveryDate: isoDate, timeWindow, items: z.array(dayItem).min(1, { error: MSG.required }).max(MAX_LINES_PER_DAY) }))
     .min(1, { error: MSG.required })
     .max(MAX_SCHEDULE_DAYS, { error: MSG.invalid })
     .refine((days) => new Set(days.map((d) => d.deliveryDate)).size === days.length, { error: 'invalid' }),

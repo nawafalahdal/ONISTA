@@ -112,6 +112,7 @@ export default function OrdersTable({ orders, drivers }: { orders: AdminOrder[];
                                 <div className="min-w-[140px]">
                                   <p className="font-medium text-cream" dir="ltr">
                                     {format.dateTime(d.deliveryDate, { weekday: 'short', day: '2-digit', month: 'short' })}
+                                    {d.timeWindow && <span className="ms-2 text-muted">{d.timeWindow}</span>}
                                   </p>
                                   <p className="text-muted">{d.addressSnapshot}</p>
                                 </div>

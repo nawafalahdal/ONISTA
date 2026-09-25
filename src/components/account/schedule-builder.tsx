@@ -11,15 +11,20 @@ import { createCafeAddress } from '@/server/actions/cafe-addresses'
 import { submitOneOffOrder, submitWeeklySchedule } from '@/server/actions/orders'
 import { computeTotals, pickDeliveryFeePerDay, type DeliveryFeeTiers } from '@/lib/pricing'
 import { formatSar } from '@/lib/money'
-import { JEDDAH } from '@/lib/constants'
+import { DELIVERY_WINDOWS, JEDDAH, type DeliveryWindow } from '@/lib/constants'
 
 type Mode = 'one-off' | 'weekly'
 type Line = { key: string; productId: string; quantity: number }
-type Day = { key: string; date: string; lines: Line[] }
+type Day = { key: string; date: string; window: DeliveryWindow; lines: Line[] }
 type Payment = 'CARD' | 'APPLE_PAY' | 'BANK_TRANSFER'
 
 const uid = () => Math.random().toString(36).slice(2)
-const emptyDay = (date: string): Day => ({ key: uid(), date, lines: [{ key: uid(), productId: '', quantity: 1 }] })
+const emptyDay = (date: string): Day => ({
+  key: uid(),
+  date,
+  window: DELIVERY_WINDOWS[0],
+  lines: [{ key: uid(), productId: '', quantity: 1 }],
+})
 
 export default function ScheduleBuilder({
   initialMode,
@@ -112,6 +117,7 @@ export default function ScheduleBuilder({
 
       const payload = (day: Day) => ({
         deliveryDate: day.date,
+        timeWindow: day.window,
         items: day.lines.filter((l) => l.productId && l.quantity > 0).map((l) => ({ productId: l.productId, quantity: l.quantity })),
       })
 
@@ -171,6 +177,7 @@ export default function ScheduleBuilder({
         <h1 className="font-display text-4xl font-medium">{mode === 'weekly' ? t('title') : t('oneOffTitle')}</h1>
         <p className="mt-1 text-sm text-muted">{mode === 'weekly' ? t('subtitle') : t('oneOffSubtitle')}</p>
         <p className="mt-2 text-xs text-muted/80">{t('leadTimeNotice', { days: minLeadDays })}</p>
+        <p className="mt-1 text-xs text-muted/80">{t('timeWindowNotice')}</p>
       </div>
 
       <div className="inline-flex rounded-2xl border border-line bg-ink-2 p-1">
@@ -245,6 +252,21 @@ export default function ScheduleBuilder({
                           {format.dateTime(new Date(`${d}T00:00:00Z`), { weekday: 'short', day: '2-digit', month: 'short' })}
                         </option>
                       ))}
+                  </select>
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <span className="text-muted">{t('selectWindow')}</span>
+                  <select
+                    className="field w-auto py-2"
+                    dir="ltr"
+                    value={day.window}
+                    onChange={(e) => setDay(day.key, { window: e.target.value as DeliveryWindow })}
+                  >
+                    {DELIVERY_WINDOWS.map((w) => (
+                      <option key={w} value={w}>
+                        {t(`Window.${w}`)}
+                      </option>
+                    ))}
                   </select>
                 </label>
                 {mode === 'weekly' && days.length > 1 && (

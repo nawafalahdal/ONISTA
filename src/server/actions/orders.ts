@@ -25,13 +25,13 @@ export async function submitOneOffOrder(input: unknown): Promise<SubmitOrderResu
 
   const parsed = oneOffOrderSchema.safeParse(input)
   if (!parsed.success) return fail('validation', fieldErrors(parsed.error))
-  const { deliveryDate, addressId, items, ...rest } = parsed.data
+  const { deliveryDate, timeWindow, addressId, items, ...rest } = parsed.data
 
   const result = await buildOrder({
     cafeId: user.cafeId,
     type: 'ONE_OFF',
     addressId,
-    days: [{ deliveryDate, items }],
+    days: [{ deliveryDate, timeWindow, items }],
     ...rest,
   })
   if (!result.ok) return mapBuildError(result.error)

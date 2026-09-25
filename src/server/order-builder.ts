@@ -3,6 +3,7 @@ import 'server-only'
 // creating Server Actions (one-off, weekly schedule) lives here so it isn't
 // itself a publicly callable endpoint.
 import type { Locale, OrderType, PaymentMethod } from '@/generated/prisma/enums'
+import type { DeliveryWindow } from '@/lib/constants'
 import { computeTotals, pickDeliveryFeePerDay } from '@/lib/pricing'
 import { db } from '@/server/db'
 import { getSchedulingContext, isDateAllowed } from '@/server/scheduling'
@@ -10,7 +11,11 @@ import { getSchedulingContext, isDateAllowed } from '@/server/scheduling'
 /** '2026-09-26' -> a UTC-midnight Date, what Prisma's @db.Date columns expect. */
 const asDate = (iso: string) => new Date(`${iso}T00:00:00Z`)
 
-export type OrderDay = { deliveryDate: string; items: { productId: string; quantity: number }[] }
+export type OrderDay = {
+  deliveryDate: string
+  timeWindow: DeliveryWindow
+  items: { productId: string; quantity: number }[]
+}
 
 export type BuildOrderInput = {
   cafeId: string
@@ -80,6 +85,7 @@ export async function buildOrder(input: BuildOrderInput): Promise<BuildOrderResu
     })
     return {
       deliveryDate: asDate(day.deliveryDate),
+      timeWindow: day.timeWindow,
       addressId: address.id,
       addressSnapshot,
       subtotalHalalas: items.reduce((n, i) => n + i.lineTotalHalalas, 0),

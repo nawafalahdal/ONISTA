@@ -194,7 +194,13 @@
       "noDaysYet": "Add your first delivery day to get started.",
       "leadTimeNotice": "Deliveries must be booked at least {days, plural, one {# day} other {# days}} ahead of the delivery date.",
       "savingsHint": "Add more delivery days to bring the rate down to just {rate} per day — the longer your schedule, the more you save.",
-      "currentRate": "Current delivery rate: {rate} per day"
+      "currentRate": "Current delivery rate: {rate} per day",
+      "selectWindow": "Delivery window",
+      "timeWindowNotice": "Arrival is approximate within the chosen window and may shift a little with road traffic.",
+      "Window": {
+        "04:00-08:00": "First window · 4:00 - 8:00 AM",
+        "14:00-16:00": "Second window · 2:00 - 4:00 PM"
+      }
     },
     "Orders": {
       "title": "Orders",
