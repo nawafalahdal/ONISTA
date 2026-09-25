@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+/* Class-based dark mode, toggled by next-themes on <html>. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design tokens from the Onista prototype. Surface/text colours are CSS
+ * variables so every utility (bg-ink, text-cream, border-line, …) follows the
+ * active theme; the brand raspberry scale is shared by both themes.
+ * Naming is kept from the prototype: "ink" = page surface, "cream" = text.
+ */
+:root {
+  --c-ink: #fbf7f3;
+  --c-ink-2: #ffffff;
+  --c-ink-3: #f3ebe4;
+  --c-line: #e7dbd2;
+  --c-cream: #1d1518;
+  --c-muted: #6f6360;
+  --c-glow: rgba(200, 16, 110, 0.12);
+  color-scheme: light;
+}
+.dark {
+  --c-ink: #0c0a0b;
+  --c-ink-2: #141113;
+  --c-ink-3: #1c181a;
+  --c-line: #2a2427;
+  --c-cream: #f4ece4;
+  --c-muted: #a39a95;
+  --c-glow: rgba(200, 16, 110, 0.22);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-ink: var(--c-ink);
+  --color-ink-2: var(--c-ink-2);
+  --color-ink-3: var(--c-ink-3);
+  --color-line: var(--c-line);
+  --color-cream: var(--c-cream);
+  --color-muted: var(--c-muted);
+
+  --font-display: var(--font-cormorant), var(--font-tajawal), ui-serif, Georgia, serif;
+  --font-sans: var(--font-manrope), var(--font-tajawal), ui-sans-serif, system-ui, sans-serif;
+  --font-arabic: var(--font-tajawal), var(--font-manrope), sans-serif;
+}
+
+@theme {
+  --color-rose-50: #fdf0f6;
+  --color-rose-200: #f7b9d4;
+  --color-rose-300: #f38ab8;
+  --color-rose-400: #ec5a9a;
+  --color-rose-500: #e0337f;
+  --color-rose-600: #c8106e;
+  --color-rose-700: #9e0c57;
+  --color-gold: #d8b98a;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    @apply bg-ink font-sans text-cream;
+    min-height: 100vh;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  /* Arabic pages use Tajawal for body copy. */
+  html[lang='ar'] body {
+    font-family: var(--font-arabic);
+  }
+  ::selection {
+    @apply bg-rose-600 text-white;
+  }
+  input,
+  select,
+  textarea,
+  button {
+    font: inherit;
+  }
+}
+
+@layer components {
+  .eyebrow {
+    @apply text-[11px] tracking-[0.32em] text-rose-500 uppercase dark:text-rose-400;
+  }
+  html[lang='ar'] .eyebrow {
+    @apply text-xs tracking-normal;
+  }
+  .field {
+    @apply w-full rounded-xl border border-line bg-ink-2 px-4 py-3 text-sm text-cream outline-none transition placeholder:text-muted/60 focus:border-rose-500/70 focus:ring-2 focus:ring-rose-500/20;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-rose-600 px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_40px_-10px_rgba(200,16,110,0.7)] transition hover:bg-rose-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-medium text-cream transition hover:border-rose-500/60;
+  }
+  .grain::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}

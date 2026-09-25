@@ -1,0 +1,542 @@
+// Onista Cake Shop — database schema (B2B café model)
+//
+// Business model: this is a closed B2B wholesale storefront. There is no
+// public checkout — every order belongs to a café account, and café accounts
+// are created only by an admin (no self-service sign-up). Visitors without
+// an account can browse the catalog and submit a tasting-request lead only.
+//
+// Conventions
+// - Money is integer halalas (1 SAR = 100 halalas).
+// - Delivery dates are calendar dates (@db.Date) in Asia/Riyadh.
+// - An Order is one payment covering one or more Deliveries:
+//     ONE_OFF          → exactly 1 delivery, a future date chosen at checkout
+//     WEEKLY_SCHEDULE   → up to 7 deliveries (one per day) in one upcoming
+//                        week, paid in full at checkout so the kitchen can
+//                        plan the week's production in advance
+// - Same-day delivery is never offered: enforced both by the CHECK
+//   constraints below and by the Server Actions, against SchedulingSettings
+//   and BlackoutDate at order time (see src/lib/scheduling.ts).
+// - Line items snapshot title and price; catalog edits never rewrite history.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum Locale {
+  ar
+  en
+}
+
+/// ADMIN: full back office, incl. creating/managing café accounts.
+/// STAFF: kitchen/operations (orders, deliveries, catalog); cannot create
+///        or manage café accounts.
+/// CAFE:  a B2B client's storefront account. Can never reach /admin.
+/// DRIVER: sees only its own assigned deliveries for today, at /driver.
+///         Created by an admin, same as café accounts; never reaches /admin.
+enum Role {
+  ADMIN
+  STAFF
+  CAFE
+  DRIVER
+}
+
+enum OrderType {
+  ONE_OFF
+  WEEKLY_SCHEDULE
+}
+
+/// Lifecycle of the order as a whole (payment + overall progress).
+/// Day-by-day fulfilment is tracked on each Delivery.
+enum OrderStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum DeliveryStatus {
+  PENDING
+  IN_PROGRESS
+  READY_FOR_PICKUP
+  OUT_FOR_DELIVERY
+  DELIVERED
+  RETURN_REQUESTED
+  CANCELLED
+}
+
+enum ReturnDecision {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PaymentMethod {
+  CARD
+  APPLE_PAY
+  BANK_TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum TastingRequestStatus {
+  NEW
+  CONTACTED
+  SCHEDULED
+  CONVERTED
+  DECLINED
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Identity & access — closed system, accounts created by admins only
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id String @id @default(cuid())
+
+  /// Admin/staff sign in with e-mail; café accounts sign in with phone.
+  /// Exactly one identifier is set, matching the role (CHECK in migration).
+  email String? @unique @db.VarChar(254)
+  phone String? @unique @db.VarChar(20)
+  name  String? @db.VarChar(100)
+
+  passwordHash String
+  role         Role
+  isActive     Boolean @default(true)
+
+  /// True after an admin (re)sets the password; the user must choose their
+  /// own password at next sign-in.
+  mustChangePassword Boolean @default(true)
+  /// Bumped to revoke every session (password reset, deactivation, role change).
+  sessionVersion     Int     @default(0)
+
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  lastLoginAt         DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Admin who created this account (every café account has one).
+  createdById  String?
+  createdBy    User?   @relation("UserCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdUsers User[]  @relation("UserCreatedBy")
+
+  cafe               CafeProfile?
+  auditLogs          AuditLog[]
+  decidedReturns     ReturnRequest[]
+  /// DRIVER only: the deliveries an admin has assigned to this driver.
+  assignedDeliveries Delivery[]      @relation("DeliveryDriver")
+
+  @@index([role, isActive])
+}
+
+/// Business profile for a café client account (1:1 with a CAFE user).
+model CafeProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  cafeName        String  @db.VarChar(120)
+  legalName       String? @db.VarChar(160)
+  contactName     String? @db.VarChar(100)
+  contactPhone    String  @db.VarChar(20) /// E.164 — used for WhatsApp updates
+  contactEmail    String? @db.VarChar(254)
+  /// Saudi B2B invoicing (ZATCA), filled in when available.
+  vatNumber       String? @db.VarChar(15)
+  crNumber        String? @db.VarChar(20)
+  internalNotes   String? @db.VarChar(1000) /// staff-only
+  preferredLocale Locale  @default(ar)
+  /// Exact delivery location, e.g. a maps.google.com/goo.gl/maps link. Set by
+  /// the admin at account creation to streamline logistics.
+  googleMapsUrl   String? @db.VarChar(500)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  addresses      CafeAddress[]
+  orders         Order[]
+  convertedFrom  TastingRequest[]
+  returnRequests ReturnRequest[]
+}
+
+/// Saved delivery addresses (Saudi National Address format).
+model CafeAddress {
+  id     String      @id @default(cuid())
+  cafeId String
+  cafe   CafeProfile @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+
+  label            String    @db.VarChar(60) /// e.g. "Olaya branch"
+  city             String    @db.VarChar(60)
+  district         String    @db.VarChar(80)
+  street           String    @db.VarChar(120)
+  buildingNumber   String?   @db.VarChar(10)
+  additionalNumber String?   @db.VarChar(10)
+  postalCode       String?   @db.VarChar(10)
+  deliveryNotes    String?   @db.VarChar(300)
+  isDefault        Boolean   @default(false)
+  archivedAt       DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deliveries Delivery[]
+
+  @@index([cafeId])
+}
+
+/// Append-only trail of privileged actions (account creation, password
+/// resets, price changes, status updates, …).
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action     String   @db.VarChar(64)
+  entityType String   @db.VarChar(64)
+  entityId   String?  @db.VarChar(64)
+  metadata   Json?
+  ipHash     String?  @db.VarChar(64)
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorId, createdAt])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Catalog
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Category {
+  id        String   @id @default(cuid())
+  slug      String   @unique @db.VarChar(80)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  translations CategoryTranslation[]
+  products     Product[]
+}
+
+model CategoryTranslation {
+  id         String   @id @default(cuid())
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  locale     Locale
+  name       String   @db.VarChar(80)
+
+  @@unique([categoryId, locale])
+}
+
+model Product {
+  id           String   @id @default(cuid())
+  slug         String   @unique @db.VarChar(120)
+  categoryId   String
+  category     Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  priceHalalas Int
+
+  inStock       Boolean   @default(true)
+  isTastingMenu Boolean   @default(false)
+  /// Offered in the café weekly-schedule builder.
+  isSchedulable Boolean   @default(true)
+  isFeatured    Boolean   @default(false)
+  sortOrder     Int       @default(0)
+  archivedAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  translations  ProductTranslation[]
+  images        ProductImage[]
+  deliveryItems DeliveryItem[]
+  tastingItems  TastingRequestItem[]
+
+  @@index([categoryId])
+  @@index([archivedAt, inStock])
+  @@index([archivedAt, isSchedulable])
+  @@index([archivedAt, isTastingMenu])
+}
+
+model ProductTranslation {
+  id          String  @id @default(cuid())
+  productId   String
+  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  locale      Locale
+  title       String  @db.VarChar(120)
+  description String  @db.VarChar(1000)
+  badge       String? @db.VarChar(32)
+  /// Localized pack/size shown next to the price, e.g. "6 حبات" / "6 pieces",
+  /// "2.5 كيلو" / "2.5 kg", "الحبة" / "per piece".
+  unitLabel   String? @db.VarChar(40)
+
+  @@unique([productId, locale])
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String  @db.VarChar(500)
+  altAr     String? @db.VarChar(160)
+  altEn     String? @db.VarChar(160)
+  position  Int     @default(0)
+
+  @@index([productId, position])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Orders → Deliveries → Items
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Order {
+  id          String      @id @default(cuid())
+  orderNumber Int         @unique @default(autoincrement()) /// "ORD-1042"
+  type        OrderType
+  status      OrderStatus @default(PENDING_PAYMENT)
+
+  cafeId String
+  cafe   CafeProfile @relation(fields: [cafeId], references: [id], onDelete: Restrict)
+
+  /// WEEKLY_SCHEDULE only: the Sunday that starts the delivered week.
+  weekStartDate DateTime? @db.Date
+
+  notes  String? @db.VarChar(500)
+  locale Locale  @default(ar)
+
+  // Totals across all deliveries, computed server-side from DB prices.
+  subtotalHalalas    Int
+  deliveryFeeHalalas Int @default(0)
+  vatHalalas         Int
+  totalHalalas       Int
+
+  paymentMethod PaymentMethod
+  paymentStatus PaymentStatus @default(PENDING)
+  paidAt        DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deliveries Delivery[]
+
+  @@index([cafeId, createdAt])
+  @@index([status, createdAt])
+  @@index([type, weekStartDate])
+}
+
+/// One drop-off on one date. The kitchen plans production from these rows
+/// (sum of DeliveryItem.quantity grouped by deliveryDate and product).
+model Delivery {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  /// Always a future date — never today (CHECK in migration; also validated
+  /// server-side against SchedulingSettings/BlackoutDate at order time).
+  deliveryDate DateTime       @db.Date
+  timeWindow   String?        @db.VarChar(20) /// e.g. "07:00-09:00"
+  status       DeliveryStatus @default(PENDING)
+
+  addressId       String?
+  address         CafeAddress? @relation(fields: [addressId], references: [id], onDelete: SetNull)
+  /// Immutable snapshot of where it was actually sent, even if the saved
+  /// address is edited or deleted later.
+  addressSnapshot String       @db.VarChar(600)
+  recipientName   String?      @db.VarChar(100)
+  recipientPhone  String?      @db.VarChar(20)
+
+  /// The driver assigned to physically deliver this drop, if any.
+  assignedDriverId String?
+  assignedDriver   User?   @relation("DeliveryDriver", fields: [assignedDriverId], references: [id], onDelete: SetNull)
+
+  subtotalHalalas    Int
+  /// This delivery's share of the order's delivery fee — also the driver's
+  /// earning for completing it (see Driver.assignedDeliveries).
+  deliveryFeeHalalas Int       @default(0)
+  deliveredAt        DateTime?
+  staffNotes         String?   @db.VarChar(500)
+
+  /// 6-digit code the café shows the driver at the door; the driver must
+  /// enter it correctly to mark the delivery complete (proof of delivery).
+  otpCode    String?   @db.VarChar(6)
+  preparedAt DateTime? /// Set when the admin marks it READY_FOR_PICKUP.
+  pickedUpAt DateTime? /// Set when the driver marks it OUT_FOR_DELIVERY.
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items         DeliveryItem[]
+  returnRequest ReturnRequest?
+
+  @@unique([orderId, deliveryDate]) // at most one drop per day per order
+  @@index([deliveryDate, status])
+  @@index([assignedDriverId, deliveryDate])
+}
+
+/// One return/refund claim against a delivered Delivery. Filed by the café,
+/// reviewed by an admin.
+model ReturnRequest {
+  id         String         @id @default(cuid())
+  deliveryId String         @unique // one open claim per delivery
+  delivery   Delivery       @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  cafeId     String
+  cafe       CafeProfile    @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+
+  reason     String         @db.VarChar(500) /// what didn't match the agreement
+  decision   ReturnDecision @default(PENDING)
+  adminNotes String?        @db.VarChar(500)
+
+  decidedById String?
+  decidedBy   User?     @relation(fields: [decidedById], references: [id], onDelete: SetNull)
+  decidedAt   DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([decision, createdAt])
+  @@index([cafeId, createdAt])
+}
+
+model DeliveryItem {
+  id         String   @id @default(cuid())
+  deliveryId String
+  delivery   Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  productId  String?
+  product    Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  titleSnapshot    String @db.VarChar(120)
+  unitPriceHalalas Int
+  quantity         Int /// CHECK (1..200) in migration
+  lineTotalHalalas Int
+
+  @@unique([deliveryId, productId])
+  @@index([productId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Kitchen calendar
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Singleton row (id = 1) with scheduling rules the admin can tune.
+model SchedulingSettings {
+  id Int @id @default(1)
+
+  /// Orders placed after this hour (Asia/Riyadh, 0-23) can no longer target
+  /// tomorrow — the earliest date offered moves to the day after.
+  cutoffHour       Int   @default(22)
+  /// Minimum days between placing the order and the earliest delivery.
+  /// Never below 1: same-day delivery is not offered (CHECK in migration).
+  minLeadDays      Int   @default(2)
+  /// How many days ahead a delivery may be scheduled.
+  maxAdvanceDays   Int   @default(60)
+  /// Weekdays the kitchen delivers on, 0 = Sunday … 6 = Saturday.
+  deliveryWeekdays Int[] @default([0, 1, 2, 3, 4, 5, 6])
+
+  /// Per-delivery-day fee, tiered by how many days are in the order — the
+  /// more a café commits to, the lower the per-day fee. Applied by
+  /// deliveryFeePerDay() in src/lib/pricing.ts.
+  deliveryFeeOneOffHalalas Int @default(700) /// 1–6 days (incl. a ONE_OFF order): 7 SAR/day
+  deliveryFeeWeekHalalas   Int @default(500) /// 7–13 days: 5 SAR/day
+  deliveryFeeBiweekHalalas Int @default(350) /// 14–27 days: 3.5 SAR/day
+  deliveryFeeMonthHalalas  Int @default(200) /// 28+ days: 2 SAR/day
+
+  /// Per-sample fee once a café's tasting request goes past the free samples.
+  tastingExtraFeeHalalas Int @default(500)
+
+  /// Shown to the driver on "ready for pickup" — where to collect the order.
+  kitchenGoogleMapsUrl String? @db.VarChar(500)
+
+  updatedAt DateTime @updatedAt
+}
+
+/// Singleton row (id = 1): storefront marketing copy the admin edits directly
+/// (no developer needed) — the About paragraph and the three stat numbers
+/// under it. Falls back to hard-coded defaults until first saved.
+model SiteContent {
+  id Int @id @default(1)
+
+  /// Short tagline under the hero logo — kept intentionally short. Empty
+  /// string hides it, leaving just the logo and the two CTA buttons.
+  heroTaglineAr String @db.VarChar(200)
+  heroTaglineEn String @db.VarChar(200)
+
+  aboutBodyAr String @db.VarChar(2000)
+  aboutBodyEn String @db.VarChar(2000)
+
+  /// Short freeform values shown under the About section, e.g. "2019",
+  /// "40+", "72h" — same text in both locales (numbers/units, not prose).
+  statSinceYear    String @db.VarChar(20)
+  statPartnerCafes String @db.VarChar(20)
+  statOnTimeRate   String @db.VarChar(20)
+
+  updatedAt DateTime @updatedAt
+}
+
+/// Dates the kitchen does not deliver (holidays, Eid, maintenance).
+model BlackoutDate {
+  date      DateTime @id @db.Date
+  reasonAr  String?  @db.VarChar(120)
+  reasonEn  String?  @db.VarChar(120)
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tasting requests — public lead-gen form ("طلب تجربة للكافيه")
+// ─────────────────────────────────────────────────────────────────────────────
+
+model TastingRequest {
+  id            String               @id @default(cuid())
+  requestNumber Int                  @unique @default(autoincrement())
+  status        TastingRequestStatus @default(NEW)
+
+  cafeName    String  @db.VarChar(100)
+  contactName String? @db.VarChar(100)
+  phone       String  @db.VarChar(20)
+  email       String? @db.VarChar(254)
+  city        String? @db.VarChar(60)
+  notes       String? @db.VarChar(500)
+  locale      Locale  @default(ar)
+  staffNotes  String? @db.VarChar(1000)
+  ipHash      String? @db.VarChar(64)
+
+  /// Samples beyond the free cap, and the fee snapshot (rate × count) at the
+  /// time of submission — the team collects this manually, same as every
+  /// other simulated payment in this prototype.
+  extraSamplesCount Int @default(0)
+  extraFeeHalalas   Int @default(0)
+
+  /// Set when an admin turns this lead into a café account.
+  convertedCafeId String?
+  convertedCafe   CafeProfile? @relation(fields: [convertedCafeId], references: [id], onDelete: SetNull)
+
+  selectedProducts TastingRequestItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([phone])
+}
+
+model TastingRequestItem {
+  tastingRequestId String
+  tastingRequest   TastingRequest @relation(fields: [tastingRequestId], references: [id], onDelete: Cascade)
+  productId        String
+  product          Product        @relation(fields: [productId], references: [id], onDelete: Restrict)
+  titleSnapshot    String         @db.VarChar(120)
+
+  @@id([tastingRequestId, productId])
+  @@index([productId])
+}
