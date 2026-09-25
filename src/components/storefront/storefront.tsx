@@ -24,6 +24,8 @@ type SiteContent = {
   statSinceYear: string
   statPartnerCafes: string
   statOnTimeRate: string
+  heroTaglineAr: string
+  heroTaglineEn: string
 }
 
 export default function Storefront({
