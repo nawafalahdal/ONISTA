@@ -14,6 +14,8 @@ type Content = {
   statSinceYear: string
   statPartnerCafes: string
   statOnTimeRate: string
+  heroTaglineAr: string
+  heroTaglineEn: string
 }
 
 export default function ContentForm({ content }: { content: Content }) {
@@ -33,6 +35,18 @@ export default function ContentForm({ content }: { content: Content }) {
       <PageHeader title={t('contentTitle')} subtitle={t('contentSub')} />
 
       <form onSubmit={save} className="space-y-6">
+        <Panel className="space-y-4 p-6">
+          <p className="text-xs font-medium text-muted uppercase">{t('contentHeroSection')}</p>
+          <label className="block">
+            <span className="mb-1.5 block text-xs text-muted">{t('contentHeroTaglineAr')}</span>
+            <input className="field" value={f.heroTaglineAr} onChange={set('heroTaglineAr')} maxLength={200} />
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-xs text-muted">{t('contentHeroTaglineEn')}</span>
+            <input className="field" dir="ltr" value={f.heroTaglineEn} onChange={set('heroTaglineEn')} maxLength={200} />
+          </label>
+        </Panel>
+
         <Panel className="space-y-4 p-6">
           <p className="text-xs font-medium text-muted uppercase">{t('contentAboutSection')}</p>
           <label className="block">

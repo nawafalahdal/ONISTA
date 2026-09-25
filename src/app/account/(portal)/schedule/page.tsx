@@ -16,7 +16,8 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
       addresses={addresses}
       earliestDate={window_.earliestDate}
       allowedDates={window_.allowedDates}
-      deliveryFeeHalalas={window_.deliveryFeeHalalas}
+      deliveryFeeTiers={window_.deliveryFeeTiers}
+      minLeadDays={window_.minLeadDays}
     />
   )
 }

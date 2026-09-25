@@ -1,6 +1,7 @@
 import 'server-only'
 import { connection } from 'next/server'
 import { addDays, compareISO, dayOfWeek, riyadhNowParts } from '@/lib/date'
+import type { DeliveryFeeTiers } from '@/lib/pricing'
 import { db } from '@/server/db'
 
 export type SchedulingContext = {
@@ -8,7 +9,7 @@ export type SchedulingContext = {
   minLeadDays: number
   maxAdvanceDays: number
   deliveryWeekdays: number[]
-  deliveryFeeHalalas: number
+  deliveryFeeTiers: DeliveryFeeTiers
   blackout: Set<string>
   todayISO: string
 }
@@ -32,7 +33,12 @@ export async function getSchedulingContext(): Promise<SchedulingContext> {
     minLeadDays: Math.max(1, settings.minLeadDays), // never allow same-day, even if misconfigured
     maxAdvanceDays: settings.maxAdvanceDays,
     deliveryWeekdays: settings.deliveryWeekdays,
-    deliveryFeeHalalas: settings.deliveryFeeHalalas,
+    deliveryFeeTiers: {
+      oneOffHalalas: settings.deliveryFeeOneOffHalalas,
+      weekHalalas: settings.deliveryFeeWeekHalalas,
+      biweekHalalas: settings.deliveryFeeBiweekHalalas,
+      monthHalalas: settings.deliveryFeeMonthHalalas,
+    },
     blackout: new Set(blackoutRows.map((b) => b.date.toISOString().slice(0, 10))),
     todayISO: dateISO,
   }

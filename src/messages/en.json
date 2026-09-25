@@ -192,7 +192,10 @@
       "oneOffSuccessBody": "Order {ref} is confirmed for delivery on {date}.",
       "backToDashboard": "Back to dashboard",
       "emptyDay": "Pick at least one item for each day you add.",
-      "noDaysYet": "Add your first delivery day to get started."
+      "noDaysYet": "Add your first delivery day to get started.",
+      "leadTimeNotice": "Deliveries must be booked at least {days, plural, one {# day} other {# days}} ahead of the delivery date.",
+      "savingsHint": "Add more delivery days to bring the rate down to just {rate} per day — the longer your schedule, the more you save.",
+      "currentRate": "Current delivery rate: {rate} per day"
     },
     "Orders": {
       "title": "Orders",
@@ -395,6 +398,12 @@
     "maxAdvanceDays": "Scheduling horizon (days)",
     "deliveryWeekdays": "Delivery days",
     "deliveryFee": "Delivery fee per day (SAR)",
+    "deliveryFeeTiers": "Delivery pricing by schedule length (SAR/day)",
+    "deliveryFeeTiersHint": "The longer a café's schedule, the lower the per-day delivery fee — order from highest (one-off) to lowest (full month).",
+    "deliveryFeeOneOff": "One-off order",
+    "deliveryFeeWeek": "One week",
+    "deliveryFeeBiweek": "2-3 weeks",
+    "deliveryFeeMonth": "Full month",
     "saveSettings": "Save settings",
     "settingsSaved": "Scheduling settings saved",
     "blackoutTitle": "Blackout dates",
@@ -415,6 +424,7 @@
     "DeliveryStatus": {
       "PENDING": "Pending review",
       "IN_PROGRESS": "In progress",
+      "READY_FOR_PICKUP": "Ready for pickup",
       "OUT_FOR_DELIVERY": "Out for delivery",
       "DELIVERED": "Delivered",
       "RETURN_REQUESTED": "Return requested",
@@ -467,6 +477,9 @@
     },
     "contentTitle": "Site content",
     "contentSub": "Edit the About paragraph and the stat numbers shown on the public storefront — no code changes needed.",
+    "contentHeroSection": "Homepage hero",
+    "contentHeroTaglineAr": "Tagline (Arabic)",
+    "contentHeroTaglineEn": "Tagline (English)",
     "contentAboutSection": "About section",
     "contentAboutAr": "About text (Arabic)",
     "contentAboutEn": "About text (English)",

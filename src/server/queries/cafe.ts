@@ -102,7 +102,8 @@ export async function getSchedulingWindow() {
     earliestDate: earliest,
     // Enough allowed dates to fill a 7-day builder even around blackout days.
     allowedDates: listAllowedDates(ctx, earliest, 21),
-    deliveryFeeHalalas: ctx.deliveryFeeHalalas,
+    deliveryFeeTiers: ctx.deliveryFeeTiers,
+    minLeadDays: ctx.minLeadDays,
   }
 }
 

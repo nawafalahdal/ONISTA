@@ -12,7 +12,16 @@ import { WEEKDAY_KEYS } from '@/lib/date'
 import { halalasToSar } from '@/lib/money'
 import { PageHeader, Panel } from './ui'
 
-type Settings = { cutoffHour: number; minLeadDays: number; maxAdvanceDays: number; deliveryWeekdays: number[]; deliveryFeeHalalas: number }
+type Settings = {
+  cutoffHour: number
+  minLeadDays: number
+  maxAdvanceDays: number
+  deliveryWeekdays: number[]
+  deliveryFeeOneOffHalalas: number
+  deliveryFeeWeekHalalas: number
+  deliveryFeeBiweekHalalas: number
+  deliveryFeeMonthHalalas: number
+}
 type Blackout = { date: Date; reasonAr: string | null; reasonEn: string | null }
 
 export default function SchedulingSettingsForm({ settings, blackouts }: { settings: Settings; blackouts: Blackout[] }) {
@@ -25,7 +34,10 @@ export default function SchedulingSettingsForm({ settings, blackouts }: { settin
     minLeadDays: String(settings.minLeadDays),
     maxAdvanceDays: String(settings.maxAdvanceDays),
     deliveryWeekdays: settings.deliveryWeekdays,
-    deliveryFeeHalalas: String(halalasToSar(settings.deliveryFeeHalalas)),
+    deliveryFeeOneOffHalalas: String(halalasToSar(settings.deliveryFeeOneOffHalalas)),
+    deliveryFeeWeekHalalas: String(halalasToSar(settings.deliveryFeeWeekHalalas)),
+    deliveryFeeBiweekHalalas: String(halalasToSar(settings.deliveryFeeBiweekHalalas)),
+    deliveryFeeMonthHalalas: String(halalasToSar(settings.deliveryFeeMonthHalalas)),
   })
 
   const toggleDay = (d: number) =>
@@ -43,7 +55,10 @@ export default function SchedulingSettingsForm({ settings, blackouts }: { settin
           minLeadDays: f.minLeadDays,
           maxAdvanceDays: f.maxAdvanceDays,
           deliveryWeekdays: f.deliveryWeekdays,
-          deliveryFeeHalalas: f.deliveryFeeHalalas,
+          deliveryFeeOneOffHalalas: f.deliveryFeeOneOffHalalas,
+          deliveryFeeWeekHalalas: f.deliveryFeeWeekHalalas,
+          deliveryFeeBiweekHalalas: f.deliveryFeeBiweekHalalas,
+          deliveryFeeMonthHalalas: f.deliveryFeeMonthHalalas,
         }),
       t('settingsSaved'),
     )
@@ -69,10 +84,28 @@ export default function SchedulingSettingsForm({ settings, blackouts }: { settin
             <span className="mb-1.5 block text-xs text-muted">{t('maxAdvanceDays')}</span>
             <input className="field" dir="ltr" type="number" min={1} max={365} value={f.maxAdvanceDays} onChange={(e) => setF((p) => ({ ...p, maxAdvanceDays: e.target.value }))} />
           </label>
-          <label className="block">
-            <span className="mb-1.5 block text-xs text-muted">{t('deliveryFee')}</span>
-            <input className="field" dir="ltr" type="number" min={0} step={0.5} value={f.deliveryFeeHalalas} onChange={(e) => setF((p) => ({ ...p, deliveryFeeHalalas: e.target.value }))} />
-          </label>
+          <div className="sm:col-span-2">
+            <span className="mb-2 block text-xs text-muted">{t('deliveryFeeTiers')}</span>
+            <div className="grid gap-3 sm:grid-cols-4">
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] text-muted">{t('deliveryFeeOneOff')}</span>
+                <input className="field" dir="ltr" type="number" min={0} step={0.5} value={f.deliveryFeeOneOffHalalas} onChange={(e) => setF((p) => ({ ...p, deliveryFeeOneOffHalalas: e.target.value }))} />
+              </label>
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] text-muted">{t('deliveryFeeWeek')}</span>
+                <input className="field" dir="ltr" type="number" min={0} step={0.5} value={f.deliveryFeeWeekHalalas} onChange={(e) => setF((p) => ({ ...p, deliveryFeeWeekHalalas: e.target.value }))} />
+              </label>
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] text-muted">{t('deliveryFeeBiweek')}</span>
+                <input className="field" dir="ltr" type="number" min={0} step={0.5} value={f.deliveryFeeBiweekHalalas} onChange={(e) => setF((p) => ({ ...p, deliveryFeeBiweekHalalas: e.target.value }))} />
+              </label>
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] text-muted">{t('deliveryFeeMonth')}</span>
+                <input className="field" dir="ltr" type="number" min={0} step={0.5} value={f.deliveryFeeMonthHalalas} onChange={(e) => setF((p) => ({ ...p, deliveryFeeMonthHalalas: e.target.value }))} />
+              </label>
+            </div>
+            <span className="mt-1 block text-[11px] text-muted/80">{t('deliveryFeeTiersHint')}</span>
+          </div>
           <div className="sm:col-span-2">
             <span className="mb-2 block text-xs text-muted">{t('deliveryWeekdays')}</span>
             <div className="flex flex-wrap gap-2" dir="ltr">

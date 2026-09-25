@@ -29,6 +29,8 @@ const SITE_CONTENT_DEFAULTS = {
   statSinceYear: '2019',
   statPartnerCafes: '40+',
   statOnTimeRate: '72h',
+  heroTaglineAr: 'شريكك الموثوق لتزويد كافيهات جدة يوميًا',
+  heroTaglineEn: 'Your trusted daily supplier for Jeddah cafés',
 }
 
 /** The editable About paragraph + stat numbers shown on the storefront. */

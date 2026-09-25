@@ -192,7 +192,10 @@
       "oneOffSuccessBody": "تم تأكيد الطلب {ref} للتوصيل بتاريخ {date}.",
       "backToDashboard": "العودة إلى الرئيسية",
       "emptyDay": "اختر صنفًا واحدًا على الأقل لكل يوم تضيفه.",
-      "noDaysYet": "أضف أول يوم توصيل للبدء."
+      "noDaysYet": "أضف أول يوم توصيل للبدء.",
+      "leadTimeNotice": "يلزم حجز التوصيل قبل {days, plural, one {يوم واحد} two {يومين} few {# أيام} many {# يومًا} other {# يوم}} على الأقل من تاريخ التسليم.",
+      "savingsHint": "أضف أيامًا أكثر ليصل التوصيل إلى {rate} فقط لليوم — وفّر أكثر كلما التزمت بجدول أطول.",
+      "currentRate": "سعر التوصيل الحالي: {rate} لليوم"
     },
     "Orders": {
       "title": "الطلبات",
@@ -395,6 +398,12 @@
     "maxAdvanceDays": "أفق الجدولة (أيام)",
     "deliveryWeekdays": "أيام التوصيل",
     "deliveryFee": "رسوم التوصيل لكل يوم (ر.س)",
+    "deliveryFeeTiers": "تسعير التوصيل حسب طول الجدول (ر.س لليوم)",
+    "deliveryFeeTiersHint": "كلما التزمت الكافيه بجدول أطول، قلّت رسوم التوصيل لكل يوم — رتّب الأسعار من الأعلى (طلب مفرد) إلى الأقل (جدول شهري).",
+    "deliveryFeeOneOff": "طلب مفرد",
+    "deliveryFeeWeek": "أسبوع واحد",
+    "deliveryFeeBiweek": "أسبوعان-٣ أسابيع",
+    "deliveryFeeMonth": "شهر كامل",
     "saveSettings": "حفظ الإعدادات",
     "settingsSaved": "تم حفظ إعدادات الجدولة",
     "blackoutTitle": "أيام الإقفال",
@@ -415,6 +424,7 @@
     "DeliveryStatus": {
       "PENDING": "قيد المراجعة",
       "IN_PROGRESS": "قيد العمل",
+      "READY_FOR_PICKUP": "جاهز للاستلام",
       "OUT_FOR_DELIVERY": "خارج للتوصيل",
       "DELIVERED": "تم التوصيل",
       "RETURN_REQUESTED": "طلب استرجاع",
@@ -467,6 +477,9 @@
     },
     "contentTitle": "محتوى الموقع",
     "contentSub": "عدّل نص «من نحن» والأرقام الظاهرة في المتجر العام — بدون أي تعديل برمجي.",
+    "contentHeroSection": "شعار الصفحة الرئيسية (Hero)",
+    "contentHeroTaglineAr": "النص التعريفي بالعربية",
+    "contentHeroTaglineEn": "النص التعريفي بالإنجليزية",
     "contentAboutSection": "قسم «من نحن»",
     "contentAboutAr": "نص «من نحن» (عربي)",
     "contentAboutEn": "نص «من نحن» (إنجليزي)",

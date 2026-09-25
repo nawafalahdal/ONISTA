@@ -10,7 +10,10 @@ export const schedulingSettingsSchema = z.object({
     .array(z.coerce.number().int().min(0).max(6))
     .min(1, { error: MSG.required })
     .transform((days) => [...new Set(days)].sort((a, b) => a - b)),
-  deliveryFeeHalalas: z.coerce.number().min(0).max(10_000).transform(sarToHalalas),
+  deliveryFeeOneOffHalalas: z.coerce.number().min(0).max(10_000).transform(sarToHalalas),
+  deliveryFeeWeekHalalas: z.coerce.number().min(0).max(10_000).transform(sarToHalalas),
+  deliveryFeeBiweekHalalas: z.coerce.number().min(0).max(10_000).transform(sarToHalalas),
+  deliveryFeeMonthHalalas: z.coerce.number().min(0).max(10_000).transform(sarToHalalas),
 })
 export type SchedulingSettingsInput = z.input<typeof schedulingSettingsSchema>
 

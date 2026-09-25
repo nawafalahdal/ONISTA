@@ -3,7 +3,7 @@ import 'server-only'
 // creating Server Actions (one-off, weekly schedule) lives here so it isn't
 // itself a publicly callable endpoint.
 import type { Locale, OrderType, PaymentMethod } from '@/generated/prisma/enums'
-import { computeTotals } from '@/lib/pricing'
+import { computeTotals, pickDeliveryFeePerDay } from '@/lib/pricing'
 import { db } from '@/server/db'
 import { getSchedulingContext, isDateAllowed } from '@/server/scheduling'
 
@@ -60,6 +60,9 @@ export async function buildOrder(input: BuildOrderInput): Promise<BuildOrderResu
   }
 
   const addressSnapshot = [address.street, address.district, address.city].filter(Boolean).join(', ')
+  // The whole schedule shares one per-day rate: more delivery days booked in
+  // one go means a cheaper rate for all of them (see pickDeliveryFeePerDay).
+  const deliveryFeePerDayHalalas = pickDeliveryFeePerDay(input.days.length, ctx.deliveryFeeTiers)
   const deliveries = input.days.map((day) => {
     // Merge duplicate product rows within the same day.
     const merged = new Map<string, number>()
@@ -80,12 +83,13 @@ export async function buildOrder(input: BuildOrderInput): Promise<BuildOrderResu
       addressId: address.id,
       addressSnapshot,
       subtotalHalalas: items.reduce((n, i) => n + i.lineTotalHalalas, 0),
+      deliveryFeeHalalas: deliveryFeePerDayHalalas,
       items: { create: items },
     }
   })
 
   const subtotalHalalas = deliveries.reduce((n, d) => n + d.subtotalHalalas, 0)
-  const totals = computeTotals(subtotalHalalas, deliveries.length, ctx.deliveryFeeHalalas)
+  const totals = computeTotals(subtotalHalalas, deliveries.length, deliveryFeePerDayHalalas)
   const weekStartDate = input.type === 'WEEKLY_SCHEDULE' ? asDate(input.days[0]!.deliveryDate) : undefined
 
   const order = await db.order.create({

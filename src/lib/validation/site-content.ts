@@ -7,5 +7,7 @@ export const siteContentSchema = z.object({
   statSinceYear: text({ min: 1, max: 20 }),
   statPartnerCafes: text({ min: 1, max: 20 }),
   statOnTimeRate: text({ min: 1, max: 20 }),
+  heroTaglineAr: text({ min: 1, max: 200 }),
+  heroTaglineEn: text({ min: 1, max: 200 }),
 })
 export type SiteContentInput = z.input<typeof siteContentSchema>

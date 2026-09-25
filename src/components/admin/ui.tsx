@@ -7,7 +7,7 @@ import { ChevronDown } from 'lucide-react'
 export const ORDER_STATUSES = ['PENDING_PAYMENT', 'CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'] as const
 // RETURN_REQUESTED is deliberately excluded: staff never pick it from this
 // dropdown, it's only set by a café filing a return (see Returns Manager).
-export const DELIVERY_STATUSES = ['PENDING', 'IN_PROGRESS', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'] as const
+export const DELIVERY_STATUSES = ['PENDING', 'IN_PROGRESS', 'READY_FOR_PICKUP', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'] as const
 export const TASTING_STATUSES = ['NEW', 'CONTACTED', 'SCHEDULED', 'CONVERTED', 'DECLINED'] as const
 export type OrderStatus = (typeof ORDER_STATUSES)[number]
 export type DeliveryStatus = (typeof DELIVERY_STATUSES)[number]
@@ -21,6 +21,7 @@ const TONE: Record<string, string> = {
   CONFIRMED: 'bg-amber-400/15 text-amber-700 ring-amber-400/30 dark:text-amber-300',
   CONTACTED: 'bg-amber-400/15 text-amber-700 ring-amber-400/30 dark:text-amber-300',
   IN_PROGRESS: 'bg-violet-400/15 text-violet-700 ring-violet-400/30 dark:text-violet-300',
+  READY_FOR_PICKUP: 'bg-orange-400/15 text-orange-700 ring-orange-400/30 dark:text-orange-300',
   OUT_FOR_DELIVERY: 'bg-violet-400/15 text-violet-700 ring-violet-400/30 dark:text-violet-300',
   DELIVERED: 'bg-emerald-400/15 text-emerald-700 ring-emerald-400/30 dark:text-emerald-300',
   COMPLETED: 'bg-emerald-400/15 text-emerald-700 ring-emerald-400/30 dark:text-emerald-300',

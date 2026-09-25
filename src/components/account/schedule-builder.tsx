@@ -9,7 +9,7 @@ import type { CatalogProduct } from '@/server/queries/catalog'
 import type { CafeAddressRow } from '@/server/queries/cafe'
 import { createCafeAddress } from '@/server/actions/cafe-addresses'
 import { submitOneOffOrder, submitWeeklySchedule } from '@/server/actions/orders'
-import { computeTotals } from '@/lib/pricing'
+import { computeTotals, pickDeliveryFeePerDay, type DeliveryFeeTiers } from '@/lib/pricing'
 import { formatSar } from '@/lib/money'
 import { JEDDAH } from '@/lib/constants'
 
@@ -27,14 +27,16 @@ export default function ScheduleBuilder({
   addresses,
   earliestDate,
   allowedDates,
-  deliveryFeeHalalas,
+  deliveryFeeTiers,
+  minLeadDays,
 }: {
   initialMode: Mode
   products: CatalogProduct[]
   addresses: CafeAddressRow[]
   earliestDate: string
   allowedDates: string[]
-  deliveryFeeHalalas: number
+  deliveryFeeTiers: DeliveryFeeTiers
+  minLeadDays: number
 }) {
   const t = useTranslations('Account.Schedule')
   const taddr = useTranslations('Account.Addresses')
@@ -76,7 +78,18 @@ export default function ScheduleBuilder({
 
   const dayTotal = (day: Day) => day.lines.reduce((n, l) => n + (byId.get(l.productId)?.priceHalalas ?? 0) * l.quantity, 0)
   const subtotal = days.reduce((n, d) => n + dayTotal(d), 0)
-  const totals = computeTotals(subtotal, days.length, deliveryFeeHalalas)
+  const deliveryFeePerDay = pickDeliveryFeePerDay(days.length, deliveryFeeTiers)
+  const totals = computeTotals(subtotal, days.length, deliveryFeePerDay)
+  // Show the café how much closer they are to the next cheaper tier — a
+  // concrete, numeric nudge rather than a vague "save more" message.
+  const nextTier =
+    days.length < 2
+      ? { atDays: 2, perDayHalalas: deliveryFeeTiers.weekHalalas }
+      : days.length < 7
+        ? { atDays: 7, perDayHalalas: deliveryFeeTiers.biweekHalalas }
+        : days.length < 16
+          ? { atDays: 16, perDayHalalas: deliveryFeeTiers.monthHalalas }
+          : null
   const usingNewAddress = addressId === '__new'
   const canSubmit =
     days.every((d) => d.lines.some((l) => l.productId && l.quantity > 0)) &&
@@ -157,6 +170,7 @@ export default function ScheduleBuilder({
       <div>
         <h1 className="font-display text-4xl font-medium">{mode === 'weekly' ? t('title') : t('oneOffTitle')}</h1>
         <p className="mt-1 text-sm text-muted">{mode === 'weekly' ? t('subtitle') : t('oneOffSubtitle')}</p>
+        <p className="mt-2 text-xs text-muted/80">{t('leadTimeNotice', { days: minLeadDays })}</p>
       </div>
 
       <div className="inline-flex rounded-2xl border border-line bg-ink-2 p-1">
@@ -316,6 +330,10 @@ export default function ScheduleBuilder({
         <div className="mt-4 flex items-baseline justify-between border-t border-line pt-4">
           <span className="text-sm">{t('total')}</span>
           <span className="font-display text-3xl">{formatSar(totals.totalHalalas, locale)}</span>
+        </div>
+        <div className="mt-3 rounded-xl bg-rose-600/10 p-3 text-xs text-rose-300">
+          <p>{t('currentRate', { rate: formatSar(deliveryFeePerDay, locale) })}</p>
+          {nextTier && <p className="mt-1">{t('savingsHint', { rate: formatSar(nextTier.perDayHalalas, locale) })}</p>}
         </div>
 
         <div className="mt-5">

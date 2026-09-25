@@ -67,6 +67,7 @@ enum OrderStatus {
 enum DeliveryStatus {
   PENDING
   IN_PROGRESS
+  READY_FOR_PICKUP
   OUT_FOR_DELIVERY
   DELIVERED
   RETURN_REQUESTED
@@ -361,9 +362,18 @@ model Delivery {
   assignedDriverId String?
   assignedDriver   User?   @relation("DeliveryDriver", fields: [assignedDriverId], references: [id], onDelete: SetNull)
 
-  subtotalHalalas Int
-  deliveredAt     DateTime?
-  staffNotes      String?   @db.VarChar(500)
+  subtotalHalalas    Int
+  /// This delivery's share of the order's delivery fee — also the driver's
+  /// earning for completing it (see Driver.assignedDeliveries).
+  deliveryFeeHalalas Int       @default(0)
+  deliveredAt        DateTime?
+  staffNotes         String?   @db.VarChar(500)
+
+  /// 6-digit code the café shows the driver at the door; the driver must
+  /// enter it correctly to mark the delivery complete (proof of delivery).
+  otpCode    String?   @db.VarChar(6)
+  preparedAt DateTime? /// Set when the admin marks it READY_FOR_PICKUP.
+  pickedUpAt DateTime? /// Set when the driver marks it OUT_FOR_DELIVERY.
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -425,15 +435,28 @@ model SchedulingSettings {
 
   /// Orders placed after this hour (Asia/Riyadh, 0-23) can no longer target
   /// tomorrow — the earliest date offered moves to the day after.
-  cutoffHour         Int   @default(22)
+  cutoffHour       Int   @default(22)
   /// Minimum days between placing the order and the earliest delivery.
   /// Never below 1: same-day delivery is not offered (CHECK in migration).
-  minLeadDays        Int   @default(1)
+  minLeadDays      Int   @default(2)
   /// How many days ahead a delivery may be scheduled.
-  maxAdvanceDays     Int   @default(60)
+  maxAdvanceDays   Int   @default(60)
   /// Weekdays the kitchen delivers on, 0 = Sunday … 6 = Saturday.
-  deliveryWeekdays   Int[] @default([0, 1, 2, 3, 4, 5, 6])
-  deliveryFeeHalalas Int   @default(0)
+  deliveryWeekdays Int[] @default([0, 1, 2, 3, 4, 5, 6])
+
+  /// Per-delivery-day fee, tiered by how many days are in the order — the
+  /// more a café commits to, the lower the per-day fee. Applied by
+  /// deliveryFeePerDay() in src/lib/pricing.ts.
+  deliveryFeeOneOffHalalas Int @default(700) /// 1–6 days (incl. a ONE_OFF order): 7 SAR/day
+  deliveryFeeWeekHalalas   Int @default(500) /// 7–13 days: 5 SAR/day
+  deliveryFeeBiweekHalalas Int @default(350) /// 14–27 days: 3.5 SAR/day
+  deliveryFeeMonthHalalas  Int @default(200) /// 28+ days: 2 SAR/day
+
+  /// Per-sample fee once a café's tasting request goes past the free samples.
+  tastingExtraFeeHalalas Int @default(500)
+
+  /// Shown to the driver on "ready for pickup" — where to collect the order.
+  kitchenGoogleMapsUrl String? @db.VarChar(500)
 
   updatedAt DateTime @updatedAt
 }
@@ -443,6 +466,11 @@ model SchedulingSettings {
 /// under it. Falls back to hard-coded defaults until first saved.
 model SiteContent {
   id Int @id @default(1)
+
+  /// Short tagline under the hero logo — kept intentionally short. Empty
+  /// string hides it, leaving just the logo and the two CTA buttons.
+  heroTaglineAr String @db.VarChar(200)
+  heroTaglineEn String @db.VarChar(200)
 
   aboutBodyAr String @db.VarChar(2000)
   aboutBodyEn String @db.VarChar(2000)
@@ -482,6 +510,12 @@ model TastingRequest {
   locale      Locale  @default(ar)
   staffNotes  String? @db.VarChar(1000)
   ipHash      String? @db.VarChar(64)
+
+  /// Samples beyond the free cap, and the fee snapshot (rate × count) at the
+  /// time of submission — the team collects this manually, same as every
+  /// other simulated payment in this prototype.
+  extraSamplesCount Int @default(0)
+  extraFeeHalalas   Int @default(0)
 
   /// Set when an admin turns this lead into a café account.
   convertedCafeId String?
