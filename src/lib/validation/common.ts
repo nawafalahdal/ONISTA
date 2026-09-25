@@ -69,6 +69,13 @@ export const checkbox = z
   .transform((v) => v === true || v === 'on' || v === 'true')
 
 /** Flatten a ZodError into { field: [i18nKey, ...] } using dotted paths. */
+/** A Google Maps place/share link — the only URL shape this app ever links out to. */
+export const googleMapsUrl = z
+  .string()
+  .trim()
+  .max(500)
+  .regex(/^https:\/\/(www\.)?(google\.[a-z.]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps)\//, { error: MSG.invalid })
+
 export function fieldErrors(error: z.ZodError): Record<string, string[]> {
   const out: Record<string, string[]> = {}
   for (const issue of error.issues) {

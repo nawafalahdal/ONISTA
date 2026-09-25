@@ -21,6 +21,10 @@ export const RATE_LIMITS = {
   cafeMutation: { limit: 60, windowSeconds: 60 },
   /** Placing an order (one-off or weekly schedule), per café. */
   placeOrder: { limit: 20, windowSeconds: 60 * 60 },
+  /** Authenticated driver mutations (pickup, delivery), per user. */
+  driverMutation: { limit: 60, windowSeconds: 60 },
+  /** Per delivery: a 6-digit proof-of-delivery code must not be brute-forceable. */
+  deliveryOtp: { limit: 5, windowSeconds: 10 * 60 },
 } satisfies Record<string, Policy>
 
 export type RateLimitPolicy = keyof typeof RATE_LIMITS

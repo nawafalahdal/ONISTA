@@ -1,5 +1,6 @@
 'use server'
 
+import { randomInt } from 'node:crypto'
 import { fail, ok, type ActionResult } from '@/lib/action-result'
 import { fieldErrors } from '@/lib/validation/common'
 import { deliveryStatusSchema, oneOffOrderSchema, orderStatusSchema, weeklyScheduleSchema } from '@/lib/validation/order'
@@ -10,6 +11,11 @@ import { audit } from '@/server/security/audit'
 import { rateLimit } from '@/server/security/rate-limit'
 
 export type SubmitOrderResult = ActionResult<{ orderNumber: number }>
+
+/** Proof-of-delivery code. Not exported: only the READY_FOR_PICKUP transition mints one. */
+function generateOtpCode() {
+  return String(randomInt(0, 1_000_000)).padStart(6, '0')
+}
 
 function mapBuildError(error: BuildOrderError) {
   if (error.code === 'addressNotFound') return fail('notFound', { addressId: ['notFound'] })
@@ -89,9 +95,21 @@ export async function updateDeliveryStatus(input: unknown): Promise<ActionResult
   if (!parsed.success) return fail('validation', fieldErrors(parsed.error))
   const { id, status } = parsed.data
 
+  // Marking a drop ready mints the proof-of-delivery code the café will show
+  // the driver at the door. It is minted once and kept, so re-marking a drop
+  // ready does not invalidate a code the café is already looking at.
+  const existing = await db.delivery.findUnique({ where: { id }, select: { otpCode: true } })
+  if (!existing) return fail('notFound')
+  const otpCode = status === 'READY_FOR_PICKUP' ? (existing.otpCode ?? generateOtpCode()) : undefined
+
   const { count } = await db.delivery.updateMany({
     where: { id },
-    data: { status, deliveredAt: status === 'DELIVERED' ? new Date() : undefined },
+    data: {
+      status,
+      otpCode,
+      preparedAt: status === 'READY_FOR_PICKUP' ? new Date() : undefined,
+      deliveredAt: status === 'DELIVERED' ? new Date() : undefined,
+    },
   })
   if (count === 0) return fail('notFound')
 

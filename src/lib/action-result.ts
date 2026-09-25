@@ -10,6 +10,7 @@ export type ErrorCode =
   | 'notFound'
   | 'conflict'
   | 'unavailableSamples'
+  | 'invalidOtp'
   | 'generic'
 
 export type ActionResult<T = undefined> =

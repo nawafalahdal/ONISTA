@@ -116,7 +116,8 @@
     "conflict": "That phone number is already registered.",
     "passwordMismatch": "Passwords do not match, or the current password is incorrect.",
     "validation": "Please check the highlighted fields.",
-    "generic": "Something went wrong. Please try again."
+    "generic": "Something went wrong. Please try again.",
+    "invalidOtp": "That confirmation code is not correct."
   },
   "Account": {
     "portalTitle": "Partner Portal",
@@ -251,7 +252,8 @@
       "subtitle": "Your business details on file with Onista.",
       "partnerSince": "Partner since",
       "googleMapsLink": "Open delivery location on Google Maps"
-    }
+    },
+    "deliveryCodeLabel": "Delivery confirmation code — give this to the driver"
   },
   "Admin": {
     "backOffice": "Back office",
@@ -495,7 +497,9 @@
     "contentSaved": "Site content saved",
     "tastingExtraFee": "Extra sample fee (SAR)",
     "tastingExtraFeeHint": "The first 3 samples are always free; this is the price of each additional sample.",
-    "tastingExtras": "{count, plural, one {# extra sample} other {# extra samples}} · {amount}"
+    "tastingExtras": "{count, plural, one {# extra sample} other {# extra samples}} · {amount}",
+    "kitchenMapsUrl": "Kitchen location on Google Maps",
+    "kitchenMapsUrlHint": "Shown to the driver as the pickup destination once an order is ready."
   },
   "Driver": {
     "portalTitle": "Driver",
@@ -512,6 +516,15 @@
     "subtitle": "{date}",
     "empty": "No deliveries assigned to you today.",
     "anyTime": "Any time",
-    "items": "Items"
+    "items": "Items",
+    "statCompleted": "Completed",
+    "statRemaining": "Remaining",
+    "statEarnings": "Today's earnings",
+    "readyNotice": "This order is ready for pickup at the kitchen.",
+    "kitchenDirections": "Directions to kitchen",
+    "markPickedUp": "Picked up",
+    "otpPrompt": "Ask the café for the confirmation code on their dashboard and enter it here.",
+    "confirmDelivery": "Confirm delivery",
+    "awaitingKitchen": "Waiting for the kitchen to prepare this order."
   }
 }

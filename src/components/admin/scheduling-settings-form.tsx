@@ -22,6 +22,7 @@ type Settings = {
   deliveryFeeBiweekHalalas: number
   deliveryFeeMonthHalalas: number
   tastingExtraFeeHalalas: number
+  kitchenGoogleMapsUrl: string | null
 }
 type Blackout = { date: Date; reasonAr: string | null; reasonEn: string | null }
 
@@ -40,6 +41,7 @@ export default function SchedulingSettingsForm({ settings, blackouts }: { settin
     deliveryFeeBiweekHalalas: String(halalasToSar(settings.deliveryFeeBiweekHalalas)),
     deliveryFeeMonthHalalas: String(halalasToSar(settings.deliveryFeeMonthHalalas)),
     tastingExtraFeeHalalas: String(halalasToSar(settings.tastingExtraFeeHalalas)),
+    kitchenGoogleMapsUrl: settings.kitchenGoogleMapsUrl ?? '',
   })
 
   const toggleDay = (d: number) =>
@@ -62,6 +64,7 @@ export default function SchedulingSettingsForm({ settings, blackouts }: { settin
           deliveryFeeBiweekHalalas: f.deliveryFeeBiweekHalalas,
           deliveryFeeMonthHalalas: f.deliveryFeeMonthHalalas,
           tastingExtraFeeHalalas: f.tastingExtraFeeHalalas,
+          kitchenGoogleMapsUrl: f.kitchenGoogleMapsUrl,
         }),
       t('settingsSaved'),
     )
@@ -113,6 +116,18 @@ export default function SchedulingSettingsForm({ settings, blackouts }: { settin
             <span className="mb-1.5 block text-xs text-muted">{t('tastingExtraFee')}</span>
             <input className="field" dir="ltr" type="number" min={0} step={0.5} value={f.tastingExtraFeeHalalas} onChange={(e) => setF((p) => ({ ...p, tastingExtraFeeHalalas: e.target.value }))} />
             <span className="mt-1 block text-[11px] text-muted/80">{t('tastingExtraFeeHint')}</span>
+          </label>
+          <label className="block sm:col-span-2">
+            <span className="mb-1.5 block text-xs text-muted">{t('kitchenMapsUrl')}</span>
+            <input
+              className="field"
+              dir="ltr"
+              type="url"
+              placeholder="https://maps.app.goo.gl/..."
+              value={f.kitchenGoogleMapsUrl}
+              onChange={(e) => setF((p) => ({ ...p, kitchenGoogleMapsUrl: e.target.value }))}
+            />
+            <span className="mt-1 block text-[11px] text-muted/80">{t('kitchenMapsUrlHint')}</span>
           </label>
           <div className="sm:col-span-2">
             <span className="mb-2 block text-xs text-muted">{t('deliveryWeekdays')}</span>

@@ -86,7 +86,7 @@ export async function getUpcomingDeliveries(limit = 6) {
     orderBy: { deliveryDate: 'asc' },
     take: limit,
     select: {
-      id: true, deliveryDate: true, status: true, subtotalHalalas: true,
+      id: true, deliveryDate: true, timeWindow: true, status: true, subtotalHalalas: true, otpCode: true,
       order: { select: { orderNumber: true, type: true } },
       items: { select: { id: true, titleSnapshot: true, quantity: true } },
     },

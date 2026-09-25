@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { sarToHalalas } from '@/lib/money'
-import { MSG, isoDate, optional, text } from './common'
+import { MSG, googleMapsUrl, isoDate, optional, text } from './common'
 
 export const schedulingSettingsSchema = z.object({
   cutoffHour: z.coerce.number().int().min(0).max(23, { error: MSG.invalid }),
@@ -15,6 +15,8 @@ export const schedulingSettingsSchema = z.object({
   deliveryFeeBiweekHalalas: z.coerce.number().min(0).max(10_000).transform(sarToHalalas),
   deliveryFeeMonthHalalas: z.coerce.number().min(0).max(10_000).transform(sarToHalalas),
   tastingExtraFeeHalalas: z.coerce.number().min(0).max(10_000).transform(sarToHalalas),
+  // Shown to drivers as the pickup destination.
+  kitchenGoogleMapsUrl: optional(googleMapsUrl),
 })
 export type SchedulingSettingsInput = z.input<typeof schedulingSettingsSchema>
 

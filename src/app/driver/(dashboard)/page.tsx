@@ -1,6 +1,7 @@
 import DeliveriesToday from '@/components/driver/deliveries-today'
-import { getDriverDeliveriesToday } from '@/server/queries/driver'
+import { getDriverDayStats, getDriverDeliveriesToday } from '@/server/queries/driver'
 
 export default async function DriverPage() {
-  return <DeliveriesToday deliveries={await getDriverDeliveriesToday()} />
+  const [run, stats] = await Promise.all([getDriverDeliveriesToday(), getDriverDayStats()])
+  return <DeliveriesToday deliveries={run.deliveries} kitchenGoogleMapsUrl={run.kitchenGoogleMapsUrl} stats={stats} />
 }

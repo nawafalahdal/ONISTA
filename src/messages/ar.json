@@ -116,7 +116,8 @@
     "conflict": "رقم الجوال هذا مسجّل مسبقًا.",
     "passwordMismatch": "كلمتا المرور غير متطابقتين، أو كلمة المرور الحالية غير صحيحة.",
     "validation": "يرجى مراجعة الحقول المحددة.",
-    "generic": "حدث خطأ ما. حاول مرة أخرى."
+    "generic": "حدث خطأ ما. حاول مرة أخرى.",
+    "invalidOtp": "رمز التأكيد غير صحيح."
   },
   "Account": {
     "portalTitle": "بوابة الشركاء",
@@ -251,7 +252,8 @@
       "subtitle": "بيانات كافيهك المسجلة لدى أونيستا.",
       "partnerSince": "شريك منذ",
       "googleMapsLink": "افتح موقع التوصيل على خرائط جوجل"
-    }
+    },
+    "deliveryCodeLabel": "رمز تأكيد الاستلام — أعطه للسائق"
   },
   "Admin": {
     "backOffice": "لوحة الإدارة",
@@ -495,7 +497,9 @@
     "contentSaved": "تم حفظ محتوى الموقع",
     "tastingExtraFee": "رسوم العينة الإضافية (ر.س)",
     "tastingExtraFeeHint": "أول ٣ عينات مجانية دائمًا؛ هذه قيمة كل عينة إضافية يطلبها الكافيه.",
-    "tastingExtras": "{count, plural, one {عينة إضافية واحدة} two {عينتان إضافيتان} few {# عينات إضافية} many {# عينة إضافية} other {# عينة إضافية}} · {amount}"
+    "tastingExtras": "{count, plural, one {عينة إضافية واحدة} two {عينتان إضافيتان} few {# عينات إضافية} many {# عينة إضافية} other {# عينة إضافية}} · {amount}",
+    "kitchenMapsUrl": "موقع المصنع على خرائط قوقل",
+    "kitchenMapsUrlHint": "يظهر للسائق كوجهة الاستلام عندما يصبح الطلب جاهزًا."
   },
   "Driver": {
     "portalTitle": "السائق",
@@ -512,6 +516,15 @@
     "subtitle": "{date}",
     "empty": "لا توجد توصيلات معيّنة لك اليوم.",
     "anyTime": "أي وقت",
-    "items": "الأصناف"
+    "items": "الأصناف",
+    "statCompleted": "طلبات مكتملة",
+    "statRemaining": "متبقية",
+    "statEarnings": "مستحقاتك اليوم",
+    "readyNotice": "الطلب جاهز للاستلام من المصنع.",
+    "kitchenDirections": "الطريق إلى المصنع",
+    "markPickedUp": "استلمت الطلب",
+    "otpPrompt": "اطلب من الكافيه رمز التأكيد الظاهر في لوحته وأدخله هنا.",
+    "confirmDelivery": "تأكيد التسليم",
+    "awaitingKitchen": "بانتظار تجهيز الطلب في المصنع."
   }
 }

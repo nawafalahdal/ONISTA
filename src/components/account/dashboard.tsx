@@ -8,11 +8,16 @@ import { formatSar } from '@/lib/money'
 type Delivery = {
   id: string
   deliveryDate: Date
+  timeWindow: string | null
   status: string
   subtotalHalalas: number
+  otpCode: string | null
   order: { orderNumber: number; type: 'ONE_OFF' | 'WEEKLY_SCHEDULE' }
   items: { id: string; titleSnapshot: string; quantity: number }[]
 }
+
+/** The café reads this code out to the driver; it is what closes the delivery. */
+const SHOWS_OTP = new Set(['READY_FOR_PICKUP', 'OUT_FOR_DELIVERY'])
 
 type Overview = { totalOrders: number; totalSpentHalalas: number; upcomingDeliveries: number }
 
@@ -96,18 +101,29 @@ export default function Dashboard({
         ) : (
           <ul className="mt-4 divide-y divide-line">
             {deliveries.map((d) => (
-              <li key={d.id} className="flex items-center gap-3 py-3 text-sm">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-rose-600/10 text-xs font-semibold text-rose-500" dir="ltr">
-                  {format.dateTime(d.deliveryDate, { day: '2-digit', month: 'short' })}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate">{d.items.map((i) => `${i.quantity}× ${i.titleSnapshot}`).join(' · ')}</p>
-                  <p className="text-xs text-muted" dir="ltr">
-                    ORD-{d.order.orderNumber} {d.order.type === 'WEEKLY_SCHEDULE' && '· ' + ta('typeWeekly')}
-                  </p>
+              <li key={d.id} className="py-3 text-sm">
+                <div className="flex items-center gap-3">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-rose-600/10 text-xs font-semibold text-rose-500" dir="ltr">
+                    {format.dateTime(d.deliveryDate, { day: '2-digit', month: 'short' })}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate">{d.items.map((i) => `${i.quantity}× ${i.titleSnapshot}`).join(' · ')}</p>
+                    <p className="text-xs text-muted" dir="ltr">
+                      ORD-{d.order.orderNumber} {d.timeWindow && `· ${d.timeWindow}`}{' '}
+                      {d.order.type === 'WEEKLY_SCHEDULE' && '· ' + ta('typeWeekly')}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-xs font-medium text-muted">{ta(`DeliveryStatus.${d.status}`)}</span>
+                  <span className="shrink-0 text-sm font-semibold">{formatSar(d.subtotalHalalas, locale)}</span>
                 </div>
-                <span className="shrink-0 text-xs font-medium text-muted">{ta(`DeliveryStatus.${d.status}`)}</span>
-                <span className="shrink-0 text-sm font-semibold">{formatSar(d.subtotalHalalas, locale)}</span>
+                {d.otpCode && SHOWS_OTP.has(d.status) && (
+                  <div className="mt-2 flex items-center justify-between gap-3 rounded-xl bg-rose-600/10 px-3 py-2">
+                    <span className="text-xs text-rose-600 dark:text-rose-300">{t('deliveryCodeLabel')}</span>
+                    <span className="font-display text-xl tracking-[0.3em] text-rose-500 tabular-nums dark:text-rose-400" dir="ltr">
+                      {d.otpCode}
+                    </span>
+                  </div>
+                )}
               </li>
             ))}
           </ul>

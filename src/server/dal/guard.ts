@@ -1,7 +1,7 @@
 import 'server-only'
 import { fail, type ActionResult } from '@/lib/action-result'
 import { rateLimit } from '@/server/security/rate-limit'
-import { getCafeUser, getStaffUser, type CafeSessionUser, type SessionUser } from './session'
+import { getCafeUser, getDriverUser, getStaffUser, type CafeSessionUser, type SessionUser } from './session'
 
 // NOTE: deliberately NOT a 'use server' module. Every export of a
 // 'use server' file becomes a publicly reachable endpoint, so helpers like
@@ -26,6 +26,19 @@ export async function guardCafeAction(): Promise<Guarded<CafeSessionUser>> {
   const user = await getCafeUser()
   if (!user) return { denied: fail('unauthorized') }
   const limit = await rateLimit('cafeMutation', user.id)
+  if (!limit.success) return { denied: fail('rateLimited') }
+  return { user }
+}
+
+/**
+ * Same as {@link guardStaffAction}, for the driver portal. Being a driver is
+ * not enough on its own: every driver action must additionally scope its
+ * write to deliveries assigned to this user.
+ */
+export async function guardDriverAction(): Promise<Guarded<SessionUser>> {
+  const user = await getDriverUser()
+  if (!user) return { denied: fail('unauthorized') }
+  const limit = await rateLimit('driverMutation', user.id)
   if (!limit.success) return { denied: fail('rateLimited') }
   return { user }
 }

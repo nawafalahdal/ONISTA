@@ -1,17 +1,10 @@
 import { z } from 'zod'
-import { MSG, email, id, localeSchema, optional, phone, text } from './common'
+import { MSG, email, googleMapsUrl, id, localeSchema, optional, phone, text } from './common'
 
 // TODO(before launch): raise this to the full strength policy (12+ chars,
 // mixed character classes) once the environment-variable UX issue that led
 // to relaxing SEED_ADMIN_PASSWORD is resolved for admin-issued passwords too.
 const initialPassword = z.string().min(8).max(128)
-
-/** A Google Maps place/share link — the only URL shape this app ever links out to. */
-const googleMapsUrl = z
-  .string()
-  .trim()
-  .max(500)
-  .regex(/^https:\/\/(www\.)?(google\.[a-z.]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps)\//, { error: MSG.invalid })
 
 export const cafeAddressSchema = z.object({
   label: text({ min: 1, max: 60 }),
