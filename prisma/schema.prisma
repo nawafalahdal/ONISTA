@@ -438,6 +438,24 @@ model SchedulingSettings {
   updatedAt DateTime @updatedAt
 }
 
+/// Singleton row (id = 1): storefront marketing copy the admin edits directly
+/// (no developer needed) — the About paragraph and the three stat numbers
+/// under it. Falls back to hard-coded defaults until first saved.
+model SiteContent {
+  id Int @id @default(1)
+
+  aboutBodyAr String @db.VarChar(2000)
+  aboutBodyEn String @db.VarChar(2000)
+
+  /// Short freeform values shown under the About section, e.g. "2019",
+  /// "40+", "72h" — same text in both locales (numbers/units, not prose).
+  statSinceYear    String @db.VarChar(20)
+  statPartnerCafes String @db.VarChar(20)
+  statOnTimeRate   String @db.VarChar(20)
+
+  updatedAt DateTime @updatedAt
+}
+
 /// Dates the kitchen does not deliver (holidays, Eid, maintenance).
 model BlackoutDate {
   date      DateTime @id @db.Date

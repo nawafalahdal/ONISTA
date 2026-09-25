@@ -18,7 +18,23 @@ import Footer from './footer'
  * café partner portal (/account) after signing in. This page's only
  * transactional action is the public tasting-request lead form.
  */
-export default function Storefront({ products, cutoffHour }: { products: CatalogProduct[]; cutoffHour: number }) {
+type SiteContent = {
+  aboutBodyAr: string
+  aboutBodyEn: string
+  statSinceYear: string
+  statPartnerCafes: string
+  statOnTimeRate: string
+}
+
+export default function Storefront({
+  products,
+  cutoffHour,
+  content,
+}: {
+  products: CatalogProduct[]
+  cutoffHour: number
+  content: SiteContent
+}) {
   const [tastingOpen, setTastingOpen] = useState(false)
   const tastingMenu = products.filter((p) => p.isTastingMenu && p.inStock)
   const scrollToCollection = () => document.getElementById('collection')?.scrollIntoView({ behavior: 'smooth' })
@@ -27,7 +43,7 @@ export default function Storefront({ products, cutoffHour }: { products: Catalog
     <div id="top">
       <Navbar />
       <main>
-        <HeroAbout onShop={scrollToCollection} onTasting={() => setTastingOpen(true)} />
+        <HeroAbout onShop={scrollToCollection} onTasting={() => setTastingOpen(true)} content={content} />
         <ProductsCatalog products={products} />
         <TastingSection menu={tastingMenu} onOpen={() => setTastingOpen(true)} />
       </main>

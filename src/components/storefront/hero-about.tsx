@@ -5,7 +5,7 @@ import { getImageProps } from 'next/image'
 import { motion, useScroll, useSpring, useTransform, type MotionValue } from 'framer-motion'
 import { ArrowDown, ArrowRight, ArrowLeft, Coffee } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { INNER_ARCH, LogoMark } from '@/components/ui/logo'
 import { useDirection } from '@/hooks/use-direction'
 import { useMediaQuery } from '@/hooks/use-media-query'
@@ -45,9 +45,27 @@ function useReveal(progress: MotionValue<number>, start: number) {
  * photograph, and the About copy reveals beside it — so the logo becomes the
  * About image. Horizontal motion is mirrored for right-to-left layouts.
  */
-export default function HeroAbout({ onShop, onTasting }: { onShop: () => void; onTasting: () => void }) {
+type SiteContent = {
+  aboutBodyAr: string
+  aboutBodyEn: string
+  statSinceYear: string
+  statPartnerCafes: string
+  statOnTimeRate: string
+}
+
+export default function HeroAbout({
+  onShop,
+  onTasting,
+  content,
+}: {
+  onShop: () => void
+  onTasting: () => void
+  content: SiteContent
+}) {
   const t = useTranslations('Hero')
   const ta = useTranslations('About')
+  const locale = useLocale()
+  const aboutBody = locale === 'ar' ? content.aboutBodyAr : content.aboutBodyEn
   const { rtl, sign } = useDirection()
   const { resolvedTheme } = useTheme()
   const trackRef = useRef<HTMLElement>(null)
@@ -90,9 +108,9 @@ export default function HeroAbout({ onShop, onTasting }: { onShop: () => void; o
   const cueOpacity = useTransform(p, [0, 0.08], [1, 0])
 
   const stats = [
-    { value: '2019', label: ta('statEst') },
-    { value: '40+', label: ta('statCafes') },
-    { value: '72h', label: ta('statDough') },
+    { value: content.statSinceYear, label: ta('statEst') },
+    { value: content.statPartnerCafes, label: ta('statCafes') },
+    { value: content.statOnTimeRate, label: ta('statDough') },
   ]
   const Arrow = rtl ? ArrowLeft : ArrowRight
 
@@ -232,7 +250,7 @@ export default function HeroAbout({ onShop, onTasting }: { onShop: () => void; o
               <em className="text-rose-500 dark:text-rose-300">{ta('titleB')}</em>
             </motion.h2>
             <motion.p style={a3} className="mt-5 max-w-lg text-sm leading-relaxed text-muted md:text-base">
-              {ta('body')}
+              {aboutBody}
             </motion.p>
             <motion.dl style={a4} className="mt-8 hidden grid-cols-3 gap-6 border-t border-line pt-6 sm:grid">
               {stats.map((s) => (

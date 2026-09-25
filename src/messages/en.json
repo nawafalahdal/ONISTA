@@ -255,6 +255,7 @@
     "products": "Products",
     "clients": "Clients",
     "drivers": "Drivers",
+    "content": "Site Content",
     "settings": "Scheduling",
     "viewStorefront": "View storefront",
     "signOut": "Sign out",
@@ -456,7 +457,24 @@
     "createDriverSub": "The account signs in with this email. Share the password with the driver yourself — they’ll be asked to change it on first sign-in.",
     "createDriver": "Create account",
     "driverCreated": "Account created for {name}",
-    "unassigned": "Unassigned"
+    "unassigned": "Unassigned",
+    "TastingStatus": {
+      "NEW": "New",
+      "CONTACTED": "Contacted",
+      "SCHEDULED": "Tasting scheduled",
+      "CONVERTED": "Converted",
+      "DECLINED": "Declined"
+    },
+    "contentTitle": "Site content",
+    "contentSub": "Edit the About paragraph and the stat numbers shown on the public storefront — no code changes needed.",
+    "contentAboutSection": "About section",
+    "contentAboutAr": "About text (Arabic)",
+    "contentAboutEn": "About text (English)",
+    "contentStatsSection": "Stat numbers",
+    "contentStatSince": "Serving since (year)",
+    "contentStatCafes": "Partner cafés",
+    "contentStatOnTime": "On-time delivery rate",
+    "contentSaved": "Site content saved"
   },
   "Driver": {
     "portalTitle": "Driver",

@@ -8,6 +8,7 @@ export const TAGS = {
   catalog: 'catalog',
   product: (id: string) => `product:${id}`,
   scheduling: 'scheduling-public',
+  siteContent: 'site-content',
 } as const
 
 /** The one scheduling fact the public storefront shows (footer cut-off note). */
@@ -17,6 +18,25 @@ export async function getPublicCutoffHour(): Promise<number> {
   cacheLife('hours')
   const settings = await db.schedulingSettings.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } })
   return settings.cutoffHour
+}
+
+const SITE_CONTENT_DEFAULTS = {
+  id: 1,
+  aboutBodyAr:
+    'أونيستا مطبخ جملة متخصص: كل كيكة وانتريميه ومخبوز فرنسي يُنتج خصيصًا لكافيهاتنا الشريكة، على جدول توصيل أسبوعي ثابت تحدده مرة واحدة وتعتمد عليه كل أسبوع. لا واجهة بيع مباشر، ولا طابور تجزئة — فقط حلويات بتقنية فرنسية متسقة، تُنتج حسب جدولك وتُفوتر كطلب أسبوعي واحد واضح.',
+  aboutBodyEn:
+    'Onista is a dedicated wholesale kitchen: every cake, entremet and viennoiserie is produced to order for our partner cafés, on a fixed weekly delivery schedule you set once and rely on every week. No walk-in counter, no retail queue — just consistent, French-technique pastry, produced to your calendar and invoiced as one clean weekly order.',
+  statSinceYear: '2019',
+  statPartnerCafes: '40+',
+  statOnTimeRate: '72h',
+}
+
+/** The editable About paragraph + stat numbers shown on the storefront. */
+export async function getSiteContent() {
+  'use cache'
+  cacheTag(TAGS.siteContent)
+  cacheLife('hours')
+  return db.siteContent.upsert({ where: { id: 1 }, update: {}, create: SITE_CONTENT_DEFAULTS })
 }
 
 /** Public product DTO: only fields safe to send to any visitor. */

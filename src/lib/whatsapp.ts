@@ -7,18 +7,22 @@ type TastingMessage = {
   items: string[]
 }
 
-/** Builds the bilingual wa.me deep link sent after a tasting request. */
+/** Builds the wa.me deep link sent after a tasting request — branded, warm, WhatsApp-formatted. */
 export function buildTastingWhatsAppUrl(businessNumber: string, m: TastingMessage) {
   const lines = [
-    `طلب تجربة للكافيه #TST-${m.requestNumber} — Onista Cake Shop`,
+    'مرحباً 👋 معكم فريق *Onista* لحلويات الجملة',
     '',
-    `☕ الكافيه / Café: ${m.cafeName}`,
-    `📞 الجوال / Phone: ${m.phone}`,
-    ...(m.city ? [`📍 المدينة / City: ${m.city}`] : []),
+    `يسعدنا استلام طلب تجربة جديد *#TST-${m.requestNumber}*`,
     '',
-    'الأصناف المطلوبة / Requested samples:',
+    `☕ *الكافيه:* ${m.cafeName}`,
+    ...(m.city ? [`📍 *المدينة:* ${m.city}`] : []),
+    `📞 *الجوال:* ${m.phone}`,
+    '',
+    '🍰 *الأصناف المطلوبة للتذوق:*',
     ...m.items.map((title, i) => `${i + 1}. ${title}`),
-    ...(m.notes ? ['', `📝 ${m.notes}`] : []),
+    ...(m.notes ? ['', `📝 *ملاحظات:* ${m.notes}`] : []),
+    '',
+    'راح نجهّز لكم صندوق التذوق ونأكد معكم موعد التوصيل قريباً 🌸',
   ]
   return `https://wa.me/${businessNumber}?text=${encodeURIComponent(lines.join('\n'))}`
 }

@@ -255,6 +255,7 @@
     "products": "المنتجات",
     "clients": "العملاء",
     "drivers": "السائقون",
+    "content": "محتوى الموقع",
     "settings": "الجدولة",
     "viewStorefront": "عرض المتجر",
     "signOut": "تسجيل الخروج",
@@ -456,7 +457,24 @@
     "createDriverSub": "يسجل الحساب الدخول بهذا البريد. شارك كلمة المرور مع السائق بنفسك — سيُطلب منه تغييرها عند أول دخول.",
     "createDriver": "إنشاء حساب",
     "driverCreated": "تم إنشاء حساب لـ {name}",
-    "unassigned": "غير معيّن"
+    "unassigned": "غير معيّن",
+    "TastingStatus": {
+      "NEW": "جديد",
+      "CONTACTED": "تم التواصل",
+      "SCHEDULED": "موعد تذوق محدد",
+      "CONVERTED": "تم التحويل لشراكة",
+      "DECLINED": "مرفوض"
+    },
+    "contentTitle": "محتوى الموقع",
+    "contentSub": "عدّل نص «من نحن» والأرقام الظاهرة في المتجر العام — بدون أي تعديل برمجي.",
+    "contentAboutSection": "قسم «من نحن»",
+    "contentAboutAr": "نص «من نحن» (عربي)",
+    "contentAboutEn": "نص «من نحن» (إنجليزي)",
+    "contentStatsSection": "الأرقام",
+    "contentStatSince": "نخدم منذ (سنة)",
+    "contentStatCafes": "كافيه شريك",
+    "contentStatOnTime": "نسبة الالتزام بموعد التوصيل",
+    "contentSaved": "تم حفظ محتوى الموقع"
   },
   "Driver": {
     "portalTitle": "السائق",
