@@ -69,12 +69,36 @@ export const checkbox = z
   .transform((v) => v === true || v === 'on' || v === 'true')
 
 /** Flatten a ZodError into { field: [i18nKey, ...] } using dotted paths. */
-/** A Google Maps place/share link — the only URL shape this app ever links out to. */
+/**
+ * A Google Maps place/share link — the only URL shape this app ever links out
+ * to. Covers every form Google's own share sheet produces today: the long
+ * google.<tld>/maps URL, the maps.google.<tld> host, the goo.gl shorteners and
+ * the newer share.google links.
+ */
 export const googleMapsUrl = z
   .string()
   .trim()
   .max(500)
-  .regex(/^https:\/\/(www\.)?(google\.[a-z.]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps)\//, { error: MSG.invalid })
+  .regex(/^https:\/\/(www\.)?(google\.[a-z.]+\/maps|maps\.google\.[a-z.]+|maps\.app\.goo\.gl|goo\.gl\/maps|share\.google)\//, {
+    error: MSG.invalid,
+  })
+
+/**
+ * Password policy for every account this platform issues — admin-created café
+ * and driver logins, and anything a user sets themselves. 12 characters with
+ * three of the four character classes; long enough that an offline crack of a
+ * leaked bcrypt hash is not worth attempting.
+ */
+export const MIN_PASSWORD_LENGTH = 12
+
+export const strongPassword = z
+  .string()
+  .min(MIN_PASSWORD_LENGTH, { error: 'passwordTooShort' })
+  .max(128, { error: MSG.tooLong })
+  .refine(
+    (v) => [/[a-z]/, /[A-Z]/, /\d/, /[^A-Za-z0-9]/].filter((re) => re.test(v)).length >= 3,
+    { error: 'passwordTooWeak' },
+  )
 
 export function fieldErrors(error: z.ZodError): Record<string, string[]> {
   const out: Record<string, string[]> = {}

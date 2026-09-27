@@ -3,7 +3,7 @@
 import { fail, ok, type ActionResult } from '@/lib/action-result'
 import { fieldErrors } from '@/lib/validation/common'
 import { deliveryTiming } from '@/lib/delivery-timing'
-import { deliveryConfirmSchema, deliveryPickupSchema } from '@/lib/validation/driver-delivery'
+import { OTP_TTL_MS, deliveryConfirmSchema, deliveryPickupSchema } from '@/lib/validation/driver-delivery'
 import { db } from '@/server/db'
 import { guardDriverAction } from '@/server/dal/guard'
 import { syncOrderStatus } from '@/server/order-status'
@@ -63,8 +63,16 @@ export async function confirmDeliveryWithOtp(input: unknown): Promise<ActionResu
   // A 6-digit code is only 10^6 wide, so cap attempts per delivery.
   if (!(await rateLimit('deliveryOtp', deliveryId)).success) return fail('rateLimited')
 
+  // The code's age is part of the same atomic match, so an expired code can
+  // never be accepted by a slow or replayed request.
   const { count } = await db.delivery.updateMany({
-    where: { id: deliveryId, assignedDriverId: user.id, status: 'OUT_FOR_DELIVERY', otpCode },
+    where: {
+      id: deliveryId,
+      assignedDriverId: user.id,
+      status: 'OUT_FOR_DELIVERY',
+      otpCode,
+      preparedAt: { gte: new Date(Date.now() - OTP_TTL_MS) },
+    },
     data: { status: 'DELIVERED', deliveredAt: new Date() },
   })
   if (count === 0) return fail('invalidOtp', { otpCode: ['invalidOtp'] })

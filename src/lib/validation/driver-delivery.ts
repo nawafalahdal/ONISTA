@@ -3,6 +3,13 @@ import { MSG, id } from './common'
 
 export const OTP_LENGTH = 6
 
+/**
+ * How long a proof-of-delivery code stays valid after the kitchen mints it.
+ * Re-marking a drop ready refreshes `preparedAt`, which renews the window
+ * without changing the digits the café is already looking at.
+ */
+export const OTP_TTL_MS = 24 * 60 * 60 * 1000
+
 export const deliveryPickupSchema = z.object({ deliveryId: id })
 
 export const deliveryConfirmSchema = z.object({

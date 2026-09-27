@@ -147,6 +147,12 @@ function warn(lines: string[]) {
   console.warn(['', ...lines.map((l, i) => (i === 0 ? `⚠️  ${l}` : `    ${l}`)), ''].join('\n'))
 }
 
+/** Mirrors `strongPassword` in src/lib/validation/common.ts. */
+function isStrongPassword(value: string) {
+  const classes = [/[a-z]/, /[A-Z]/, /\d/, /[^A-Za-z0-9]/].filter((re) => re.test(value)).length
+  return value.length >= 12 && classes >= 3
+}
+
 async function seedAdmin() {
   // First admin account. Credentials come from the environment, never code.
   // Values pasted into dashboards often carry stray spaces or newlines.
@@ -166,10 +172,20 @@ async function seedAdmin() {
     warn(['SEED_ADMIN_EMAIL is not a valid e-mail address: admin account NOT created.'])
     return
   }
-  // TODO(before launch): restore the strong password policy (12+ chars,
-  // 3 character classes) that was relaxed for the preview phase.
-
   const existing = await db.user.findUnique({ where: { email }, select: { id: true, role: true } })
+
+  // The strength policy applies wherever a password is SET. An account that
+  // already exists and is not being reset is left alone, so tightening this
+  // never locks anyone out of a working login — it only raises the bar the
+  // next time the password is actually changed.
+  const willSetPassword = !existing || resetPassword
+  if (willSetPassword && !isStrongPassword(password)) {
+    warn([
+      'SEED_ADMIN_PASSWORD does not meet the password policy: at least 12 characters',
+      'and 3 of lowercase / uppercase / digit / symbol. Admin password NOT set.',
+    ])
+    return
+  }
 
   if (!existing) {
     await db.user.create({

@@ -165,6 +165,12 @@ model CafeProfile {
   /// the admin at account creation to streamline logistics.
   googleMapsUrl   String? @db.VarChar(500)
 
+  /// Store credit in halalas, the same integer unit as every other amount
+  /// here. A café that cancels before the kitchen starts is credited rather
+  /// than refunded through a gateway: no payment round-trip, and it keeps the
+  /// money in the relationship. Never negative (CHECK in the migration).
+  walletBalanceHalalas Int @default(0)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

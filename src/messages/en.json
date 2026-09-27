@@ -120,7 +120,10 @@
     "validation": "Please check the highlighted fields.",
     "generic": "Something went wrong. Please try again.",
     "invalidOtp": "That confirmation code is not correct.",
-    "tooEarly": "It is still too early to collect this delivery."
+    "tooEarly": "It is still too early to collect this delivery.",
+    "passwordTooShort": "Password must be at least 12 characters.",
+    "passwordTooWeak": "Password must combine at least 3 of: lowercase, uppercase, digits, symbols.",
+    "cancellationTooLate": "Too late to cancel: the kitchen has started preparing this order. Please contact us."
   },
   "Account": {
     "portalTitle": "Partner Portal",

@@ -1,10 +1,6 @@
 import { z } from 'zod'
-import { MSG, email, googleMapsUrl, id, localeSchema, optional, phone, text } from './common'
+import { MSG, email, googleMapsUrl, id, localeSchema, optional, phone, strongPassword, text } from './common'
 
-// TODO(before launch): raise this to the full strength policy (12+ chars,
-// mixed character classes) once the environment-variable UX issue that led
-// to relaxing SEED_ADMIN_PASSWORD is resolved for admin-issued passwords too.
-const initialPassword = z.string().min(8).max(128)
 
 export const cafeAddressSchema = z.object({
   label: text({ min: 1, max: 60 }),
@@ -25,7 +21,7 @@ export const createCafeAccountSchema = z.object({
   contactName: optional(text({ max: 100 })),
   phone,
   contactEmail: optional(email),
-  password: initialPassword,
+  password: strongPassword,
   googleMapsUrl: optional(googleMapsUrl),
   address: cafeAddressSchema,
 })
@@ -46,7 +42,7 @@ export const updateCafeSchema = z.object({
 
 export const cafeIdSchema = z.object({ id })
 
-export const resetCafePasswordSchema = z.object({ id, password: initialPassword })
+export const resetCafePasswordSchema = z.object({ id, password: strongPassword })
 
 export const setCafeActiveSchema = z.object({ id, isActive: z.boolean() })
 

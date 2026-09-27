@@ -20,7 +20,11 @@ const schema = z.object({
   // Salt for hashing client IPs before they are stored (audit / abuse logs).
   IP_HASH_SECRET: z.string().min(16),
 
-  // Optional: distributed rate limiting. Required in production (multi-instance).
+  // Distributed rate limiting. Optional locally (a single process makes the
+  // in-memory limiter accurate), REQUIRED in production: serverless runs many
+  // instances, so an in-memory limiter is per-instance and an attacker
+  // spreading requests across them is barely limited at all. That matters
+  // most for the login route and the 6-digit proof-of-delivery code.
   UPSTASH_REDIS_REST_URL: z.url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
 
@@ -38,11 +42,23 @@ if (parsed.data.NODE_ENV === 'production' && !parsed.data.AUTH_URL && process.en
   throw new Error('Set AUTH_URL (or AUTH_TRUST_HOST=true behind a trusted proxy) in production')
 }
 
+// Refuse to run rather than silently degrade: a rate limiter that quietly
+// stops limiting is worse than one that refuses to start.
+//
+// Keyed off VERCEL_ENV, not NODE_ENV: `next build` always sets NODE_ENV to
+// production, so using that would demand live Redis credentials just to
+// compile on a laptop. VERCEL_ENV is set only on a real deployment, which is
+// where a per-instance limiter is actually dangerous. scripts/check-env.mjs
+// enforces the same pair for every Vercel build, preview included.
 if (
-  parsed.data.NODE_ENV === 'production' &&
+  process.env.VERCEL_ENV === 'production' &&
   !(parsed.data.UPSTASH_REDIS_REST_URL && parsed.data.UPSTASH_REDIS_REST_TOKEN)
 ) {
-  console.warn('⚠️  UPSTASH_REDIS_* not set: falling back to per-instance in-memory rate limiting.')
+  throw new Error(
+    'UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are required in production. ' +
+      'Without them rate limiting is per-instance, which on serverless leaves login and ' +
+      'the delivery confirmation code effectively unprotected.',
+  )
 }
 
 export const env = parsed.data

@@ -48,7 +48,7 @@ function StatCounter({ value, label, progress }: { value: string; label: string;
           {figure}
         </span>
       </dt>
-      <dd className="mt-2 text-[11px] tracking-[0.18em] text-muted uppercase">{label}</dd>
+      <dd className="mt-3 max-w-[16ch] text-sm leading-snug font-medium text-cream/70">{label}</dd>
     </div>
   )
 }
