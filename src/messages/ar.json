@@ -117,7 +117,8 @@
     "passwordMismatch": "كلمتا المرور غير متطابقتين، أو كلمة المرور الحالية غير صحيحة.",
     "validation": "يرجى مراجعة الحقول المحددة.",
     "generic": "حدث خطأ ما. حاول مرة أخرى.",
-    "invalidOtp": "رمز التأكيد غير صحيح."
+    "invalidOtp": "رمز التأكيد غير صحيح.",
+    "tooEarly": "ما زال الوقت مبكرًا على استلام هذا الطلب."
   },
   "Account": {
     "portalTitle": "بوابة الشركاء",
@@ -499,7 +500,10 @@
     "tastingExtraFeeHint": "أول ٣ عينات مجانية دائمًا؛ هذه قيمة كل عينة إضافية يطلبها الكافيه.",
     "tastingExtras": "{count, plural, one {عينة إضافية واحدة} two {عينتان إضافيتان} few {# عينات إضافية} many {# عينة إضافية} other {# عينة إضافية}} · {amount}",
     "kitchenMapsUrl": "موقع المصنع على خرائط قوقل",
-    "kitchenMapsUrlHint": "يظهر للسائق كوجهة الاستلام عندما يصبح الطلب جاهزًا."
+    "kitchenMapsUrlHint": "يظهر للسائق كوجهة الاستلام عندما يصبح الطلب جاهزًا.",
+    "markUrgent": "توصيل عاجل",
+    "urgentOn": "تم تفعيل التوصيل العاجل",
+    "urgentOff": "تم إلغاء التوصيل العاجل"
   },
   "Driver": {
     "portalTitle": "السائق",
@@ -512,9 +516,9 @@
     "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
     "rateLimited": "محاولات كثيرة جدًا. حاول مرة أخرى خلال ١٥ دقيقة.",
     "backToSite": "الرجوع إلى onista.sa",
-    "title": "توصيلات اليوم",
+    "title": "طلباتي",
     "subtitle": "{date}",
-    "empty": "لا توجد توصيلات معيّنة لك اليوم.",
+    "empty": "لا توجد طلبات معيّنة لك حاليًا.",
     "anyTime": "أي وقت",
     "items": "الأصناف",
     "statCompleted": "طلبات مكتملة",
@@ -525,6 +529,15 @@
     "markPickedUp": "استلمت الطلب",
     "otpPrompt": "اطلب من الكافيه رمز التأكيد الظاهر في لوحته وأدخله هنا.",
     "confirmDelivery": "تأكيد التسليم",
-    "awaitingKitchen": "بانتظار تجهيز الطلب في المصنع."
+    "awaitingKitchen": "بانتظار تجهيز الطلب في المصنع.",
+    "sectionNow": "جاهزة الآن",
+    "sectionUpcoming": "قادمة",
+    "countdownToUnlock": "يُفتح خلال",
+    "countdownToWindow": "يبدأ التوصيل خلال",
+    "countdownLate": "تأخّر عن موعده",
+    "countdownUrgent": "توصيل عاجل — الآن",
+    "urgentBadge": "عاجل",
+    "lockedUntilWindow": "يُفتح الاستلام قبل ٣ ساعات من موعد التوصيل.",
+    "cafeDirections": "الموقع"
   }
 }

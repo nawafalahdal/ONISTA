@@ -2,6 +2,7 @@
 
 import { fail, ok, type ActionResult } from '@/lib/action-result'
 import { fieldErrors } from '@/lib/validation/common'
+import { deliveryTiming } from '@/lib/delivery-timing'
 import { deliveryConfirmSchema, deliveryPickupSchema } from '@/lib/validation/driver-delivery'
 import { db } from '@/server/db'
 import { guardDriverAction } from '@/server/dal/guard'
@@ -21,6 +22,16 @@ export async function markDeliveryPickedUp(input: unknown): Promise<ActionResult
   const parsed = deliveryPickupSchema.safeParse(input)
   if (!parsed.success) return fail('validation', fieldErrors(parsed.error))
   const { deliveryId } = parsed.data
+
+  // The head-start rule is enforced here, not just greyed out in the UI: a
+  // drop cannot be collected days ahead of its window just because it is
+  // visible in the queue.
+  const target = await db.delivery.findFirst({
+    where: { id: deliveryId, assignedDriverId: user.id },
+    select: { deliveryDate: true, timeWindow: true, status: true, isUrgent: true },
+  })
+  if (!target) return fail('notFound')
+  if (!deliveryTiming(target, Date.now()).canAct) return fail('tooEarly')
 
   const { count } = await db.delivery.updateMany({
     where: { id: deliveryId, assignedDriverId: user.id, status: 'READY_FOR_PICKUP' },

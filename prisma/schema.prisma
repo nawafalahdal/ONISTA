@@ -251,6 +251,9 @@ model Product {
 
   inStock       Boolean   @default(true)
   isTastingMenu Boolean   @default(false)
+  /// What one extra tasting sample of THIS item costs beyond the free cap.
+  /// Null falls back to SchedulingSettings.tastingExtraFeeHalalas.
+  tastingFeeHalalas Int?
   /// Offered in the café weekly-schedule builder.
   isSchedulable Boolean   @default(true)
   isFeatured    Boolean   @default(false)
@@ -374,6 +377,10 @@ model Delivery {
   otpCode    String?   @db.VarChar(6)
   preparedAt DateTime? /// Set when the admin marks it READY_FOR_PICKUP.
   pickedUpAt DateTime? /// Set when the driver marks it OUT_FOR_DELIVERY.
+
+  /// Admin-flagged same-hour delivery: jumps the driver's queue and becomes
+  /// actionable immediately, ignoring the usual head-start window.
+  isUrgent Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -507,6 +514,8 @@ model TastingRequest {
   email       String? @db.VarChar(254)
   city        String? @db.VarChar(60)
   notes       String? @db.VarChar(500)
+  /// Google Maps link to the café, so the team can see where to deliver.
+  locationUrl String? @db.VarChar(500)
   locale      Locale  @default(ar)
   staffNotes  String? @db.VarChar(1000)
   ipHash      String? @db.VarChar(64)

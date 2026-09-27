@@ -11,6 +11,7 @@ export type ErrorCode =
   | 'conflict'
   | 'unavailableSamples'
   | 'invalidOtp'
+  | 'tooEarly'
   | 'generic'
 
 export type ActionResult<T = undefined> =

@@ -4,39 +4,26 @@ import { db } from '@/server/db'
 import { getSchedulingContext } from '@/server/scheduling'
 
 /**
- * This driver's open run: what, how much, where, and for whom.
- *
- * Scoped by what is actionable rather than by today's date alone, because the
- * kitchen often prepares a drop the evening before its delivery date. A drop
- * qualifies when either:
- *   - the kitchen has already handed it over (READY_FOR_PICKUP /
- *     OUT_FOR_DELIVERY), whatever date it is booked for, or
- *   - it is due today, or was due earlier and never completed — unfinished
- *     work must not silently disappear.
- * Future drops the kitchen has not started stay out of the way.
- *
- * Completed drops leave the list the moment they are confirmed; they are
- * counted in the day's summary instead (see getDriverDayStats).
+ * Every drop still assigned to this driver, near and far, so nothing is a
+ * surprise: the run sheet shows the whole queue in order and the UI counts
+ * down to each one. What a driver may act on is decided separately, by
+ * deliveryReadiness below — being visible is not permission to collect.
  *
  * Deliberately does not select otpCode: the code is the café's proof and must
  * reach the driver from the café, never from their own screen.
  */
 export async function getDriverDeliveriesToday() {
   const user = await requireDriverPage()
-  const { todayISO } = await getSchedulingContext()
-  const endOfToday = new Date(`${todayISO}T23:59:59Z`)
+  await getSchedulingContext() // opts this query out of prerendering
 
   const [deliveries, settings] = await Promise.all([
     db.delivery.findMany({
-      where: {
-        assignedDriverId: user.id,
-        status: { notIn: ['CANCELLED', 'DELIVERED'] },
-        OR: [{ status: { in: ['READY_FOR_PICKUP', 'OUT_FOR_DELIVERY'] } }, { deliveryDate: { lte: endOfToday } }],
-      },
-      orderBy: [{ deliveryDate: 'asc' }, { timeWindow: 'asc' }, { createdAt: 'asc' }],
+      where: { assignedDriverId: user.id, status: { notIn: ['CANCELLED', 'DELIVERED'] } },
+      // Urgent drops lead, then the queue runs in delivery order.
+      orderBy: [{ isUrgent: 'desc' }, { deliveryDate: 'asc' }, { timeWindow: 'asc' }, { createdAt: 'asc' }],
       select: {
         id: true, deliveryDate: true, timeWindow: true, status: true, addressSnapshot: true,
-        recipientName: true, recipientPhone: true, deliveryFeeHalalas: true,
+        recipientName: true, recipientPhone: true, deliveryFeeHalalas: true, isUrgent: true,
         order: { select: { orderNumber: true, cafe: { select: { cafeName: true, contactPhone: true, googleMapsUrl: true } } } },
         items: { select: { id: true, titleSnapshot: true, quantity: true } },
       },

@@ -4,7 +4,7 @@ import { hashPassword } from '@/auth/password'
 import { Prisma } from '@/generated/prisma/client'
 import { fail, ok, type ActionResult } from '@/lib/action-result'
 import { fieldErrors } from '@/lib/validation/common'
-import { assignDriverSchema, createDriverAccountSchema, resetDriverPasswordSchema, setDriverActiveSchema } from '@/lib/validation/driver'
+import { assignDriverSchema, setDeliveryUrgentSchema, createDriverAccountSchema, resetDriverPasswordSchema, setDriverActiveSchema } from '@/lib/validation/driver'
 import { db } from '@/server/db'
 import { guardStaffAction } from '@/server/dal/guard'
 import { audit } from '@/server/security/audit'
@@ -93,5 +93,28 @@ export async function assignDriver(input: unknown): Promise<ActionResult<{ id: s
   if (count === 0) return fail('notFound')
 
   await audit({ actorId: user.id, action: 'delivery.assign_driver', entityType: 'Delivery', entityId: deliveryId, metadata: { driverId: driverId ?? null } })
+  return ok({ id: deliveryId })
+}
+
+/**
+ * STAFF: flags a delivery for same-hour urgent dispatch. It jumps to the top
+ * of the assigned driver's queue and becomes collectable immediately, skipping
+ * the usual "not before three hours ahead of the window" rule.
+ */
+export async function setDeliveryUrgent(input: unknown): Promise<ActionResult<{ id: string }>> {
+  const { user, denied } = await guardStaffAction()
+  if (denied) return denied
+
+  const parsed = setDeliveryUrgentSchema.safeParse(input)
+  if (!parsed.success) return fail('validation', fieldErrors(parsed.error))
+  const { deliveryId, isUrgent } = parsed.data
+
+  const { count } = await db.delivery.updateMany({
+    where: { id: deliveryId, status: { notIn: ['DELIVERED', 'CANCELLED'] } },
+    data: { isUrgent },
+  })
+  if (count === 0) return fail('notFound')
+
+  await audit({ actorId: user.id, action: 'delivery.set_urgent', entityType: 'Delivery', entityId: deliveryId, metadata: { isUrgent } })
   return ok({ id: deliveryId })
 }

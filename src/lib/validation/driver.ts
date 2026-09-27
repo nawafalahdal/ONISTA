@@ -21,3 +21,5 @@ export const assignDriverSchema = z.object({
   driverId: optional(id),
 })
 export type AssignDriverInput = z.input<typeof assignDriverSchema>
+
+export const setDeliveryUrgentSchema = z.object({ deliveryId: id, isUrgent: z.boolean() })

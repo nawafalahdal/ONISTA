@@ -117,7 +117,8 @@
     "passwordMismatch": "Passwords do not match, or the current password is incorrect.",
     "validation": "Please check the highlighted fields.",
     "generic": "Something went wrong. Please try again.",
-    "invalidOtp": "That confirmation code is not correct."
+    "invalidOtp": "That confirmation code is not correct.",
+    "tooEarly": "It is still too early to collect this delivery."
   },
   "Account": {
     "portalTitle": "Partner Portal",
@@ -499,7 +500,10 @@
     "tastingExtraFeeHint": "The first 3 samples are always free; this is the price of each additional sample.",
     "tastingExtras": "{count, plural, one {# extra sample} other {# extra samples}} · {amount}",
     "kitchenMapsUrl": "Kitchen location on Google Maps",
-    "kitchenMapsUrlHint": "Shown to the driver as the pickup destination once an order is ready."
+    "kitchenMapsUrlHint": "Shown to the driver as the pickup destination once an order is ready.",
+    "markUrgent": "Urgent delivery",
+    "urgentOn": "Urgent delivery enabled",
+    "urgentOff": "Urgent delivery cleared"
   },
   "Driver": {
     "portalTitle": "Driver",
@@ -512,9 +516,9 @@
     "invalidCredentials": "Incorrect email or password.",
     "rateLimited": "Too many attempts. Try again in 15 minutes.",
     "backToSite": "Back to onista.sa",
-    "title": "Today's deliveries",
+    "title": "My deliveries",
     "subtitle": "{date}",
-    "empty": "No deliveries assigned to you today.",
+    "empty": "You have no deliveries assigned right now.",
     "anyTime": "Any time",
     "items": "Items",
     "statCompleted": "Completed",
@@ -525,6 +529,15 @@
     "markPickedUp": "Picked up",
     "otpPrompt": "Ask the café for the confirmation code on their dashboard and enter it here.",
     "confirmDelivery": "Confirm delivery",
-    "awaitingKitchen": "Waiting for the kitchen to prepare this order."
+    "awaitingKitchen": "Waiting for the kitchen to prepare this order.",
+    "sectionNow": "Ready now",
+    "sectionUpcoming": "Upcoming",
+    "countdownToUnlock": "unlocks in",
+    "countdownToWindow": "window opens in",
+    "countdownLate": "past its window",
+    "countdownUrgent": "urgent — go now",
+    "urgentBadge": "Urgent",
+    "lockedUntilWindow": "Pickup opens 3 hours before the delivery window.",
+    "cafeDirections": "Map"
   }
 }

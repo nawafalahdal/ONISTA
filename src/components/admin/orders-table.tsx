@@ -1,11 +1,11 @@
 'use client'
 
 import { Fragment, useState } from 'react'
-import { CalendarDays, Truck } from 'lucide-react'
+import { CalendarDays, Truck, Zap } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import type { AdminOrder } from '@/server/queries/admin'
 import { updateDeliveryStatus, updateOrderStatus } from '@/server/actions/orders'
-import { assignDriver } from '@/server/actions/drivers'
+import { assignDriver, setDeliveryUrgent } from '@/server/actions/drivers'
 import Toast from '@/components/ui/toast'
 import { useAdminAction } from '@/hooks/use-admin-action'
 import { useToast } from '@/hooks/use-toast'
@@ -141,6 +141,24 @@ export default function OrdersTable({ orders, drivers }: { orders: AdminOrder[];
                                       </option>
                                     ))}
                                   </select>
+                                </div>
+                                <div onClick={(e) => e.stopPropagation()}>
+                                  <button
+                                    type="button"
+                                    disabled={pending}
+                                    title={t('markUrgent')}
+                                    onClick={() =>
+                                      run(
+                                        () => setDeliveryUrgent({ deliveryId: d.id, isUrgent: !d.isUrgent }),
+                                        t(d.isUrgent ? 'urgentOff' : 'urgentOn'),
+                                      )
+                                    }
+                                    className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition ${
+                                      d.isUrgent ? 'border-rose-500 bg-rose-600 text-white' : 'border-line text-muted hover:text-cream'
+                                    }`}
+                                  >
+                                    <Zap size={12} /> {t('markUrgent')}
+                                  </button>
                                 </div>
                                 <div onClick={(e) => e.stopPropagation()}>
                                   {d.status === 'RETURN_REQUESTED' ? (
