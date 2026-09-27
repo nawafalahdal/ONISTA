@@ -509,7 +509,11 @@
     "urgentOff": "تم إلغاء التوصيل العاجل",
     "tastingFee": "سعر العينة الإضافية لهذا الصنف (ر.س)",
     "tastingFeePh": "السعر الافتراضي",
-    "tastingFeeHint": "اتركه فارغًا لاستخدام السعر الافتراضي في إعدادات الجدولة."
+    "tastingFeeHint": "اتركه فارغًا لاستخدام السعر الافتراضي في إعدادات الجدولة.",
+    "stepStartPrep": "ابدأ التجهيز",
+    "stepMarkReady": "جاهز للاستلام",
+    "stepAwaitingDriver": "بانتظار السائق",
+    "stepWithDriver": "مع السائق"
   },
   "Driver": {
     "portalTitle": "السائق",

@@ -161,6 +161,13 @@ export default function OrdersTable({ orders, drivers }: { orders: AdminOrder[];
                                   </button>
                                 </div>
                                 <div onClick={(e) => e.stopPropagation()}>
+                                  <NextStep
+                                    status={d.status}
+                                    disabled={pending}
+                                    onAdvance={(status) => run(() => updateDeliveryStatus({ id: d.id, status }), t('statusUpdated'))}
+                                  />
+                                </div>
+                                <div onClick={(e) => e.stopPropagation()}>
                                   {d.status === 'RETURN_REQUESTED' ? (
                                     <StatusPill tone="RETURN_REQUESTED">{deliveryLabel(d.status)}</StatusPill>
                                   ) : (
@@ -189,5 +196,49 @@ export default function OrdersTable({ orders, drivers }: { orders: AdminOrder[];
       </Panel>
       <Toast message={toast} />
     </div>
+  )
+}
+
+/**
+ * The one move the kitchen actually makes on a drop, as a single button
+ * instead of a status dropdown to hunt through. The dropdown stays beside it
+ * for corrections; this is the happy path.
+ *
+ * Past "ready for pickup" the drop belongs to the driver, so the admin is
+ * shown where it is rather than a control they should not be using.
+ */
+function NextStep({
+  status,
+  disabled,
+  onAdvance,
+}: {
+  status: DeliveryStatus | 'RETURN_REQUESTED'
+  disabled: boolean
+  onAdvance: (next: DeliveryStatus) => void
+}) {
+  const t = useTranslations('Admin')
+
+  const step =
+    status === 'PENDING'
+      ? ({ next: 'IN_PROGRESS', label: t('stepStartPrep') } as const)
+      : status === 'IN_PROGRESS'
+        ? ({ next: 'READY_FOR_PICKUP', label: t('stepMarkReady') } as const)
+        : null
+
+  if (!step) {
+    if (status === 'READY_FOR_PICKUP') return <span className="text-xs text-muted">{t('stepAwaitingDriver')}</span>
+    if (status === 'OUT_FOR_DELIVERY') return <span className="text-xs text-muted">{t('stepWithDriver')}</span>
+    return null
+  }
+
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={() => onAdvance(step.next)}
+      className="rounded-full bg-rose-600 px-3 py-1 text-xs font-semibold text-white transition hover:brightness-110 disabled:opacity-50"
+    >
+      {step.label}
+    </button>
   )
 }

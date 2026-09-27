@@ -509,7 +509,11 @@
     "urgentOff": "Urgent delivery cleared",
     "tastingFee": "Extra sample price for this item (SAR)",
     "tastingFeePh": "Default price",
-    "tastingFeeHint": "Leave blank to use the default price from scheduling settings."
+    "tastingFeeHint": "Leave blank to use the default price from scheduling settings.",
+    "stepStartPrep": "Start preparing",
+    "stepMarkReady": "Mark ready",
+    "stepAwaitingDriver": "Awaiting driver",
+    "stepWithDriver": "With the driver"
   },
   "Driver": {
     "portalTitle": "Driver",
