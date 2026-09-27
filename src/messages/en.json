@@ -21,12 +21,11 @@
   },
   "About": {
     "eyebrow": "About Onista",
-    "titleA": "Built for cafés",
-    "titleB": "that can't afford surprises.",
+    "titleA": "We make the dessert,",
+    "titleB": "you run the café.",
     "body": "Onista is a dedicated wholesale kitchen: every cake, entremet and viennoiserie is produced to order for our partner cafés, on a fixed weekly delivery schedule you set once and rely on every week. No walk-in counter, no retail queue — just consistent, French-technique pastry, produced to your calendar and invoiced as one clean weekly order.",
-    "statEst": "Serving Jeddah since",
-    "statCafes": "Partner cafés",
-    "statDough": "On-time delivery rate"
+    "statCafes": "partner cafés in Jeddah",
+    "statDough": "from order to delivery"
   },
   "Catalog": {
     "eyebrow": "The collection",
@@ -205,7 +204,8 @@
       "Window": {
         "04:00-08:00": "First window · 4:00 - 8:00 AM",
         "14:00-16:00": "Second window · 2:00 - 4:00 PM"
-      }
+      },
+      "jeddahOnly": "We currently deliver within Jeddah only."
     },
     "Orders": {
       "title": "Orders",

@@ -23,10 +23,9 @@ export async function getPublicSettings() {
 const SITE_CONTENT_DEFAULTS = {
   id: 1,
   aboutBodyAr:
-    'أونيستا مطبخ جملة متخصص: كل كيكة وانتريميه ومخبوز فرنسي يُنتج خصيصًا لكافيهاتنا الشريكة، على جدول توصيل أسبوعي ثابت تحدده مرة واحدة وتعتمد عليه كل أسبوع. لا واجهة بيع مباشر، ولا طابور تجزئة — فقط حلويات بتقنية فرنسية متسقة، تُنتج حسب جدولك وتُفوتر كطلب أسبوعي واحد واضح.',
+    'أونيستا مطبخ حلويات جملة في جدة: كيك وتشيز كيك وانتريميه، بسبوسة وكوكيز وماكرون — تُنتج بطلب مسبق لكافيهاتنا الشريكة، على جدول توصيل ثابت تحدده مرة واحدة وتعتمد عليه كل أسبوع. لا واجهة بيع مباشر ولا طابور تجزئة: إنتاج حسب جدولك، بجودة ثابتة، وفاتورة أسبوعية واحدة واضحة.',
   aboutBodyEn:
-    'Onista is a dedicated wholesale kitchen: every cake, entremet and viennoiserie is produced to order for our partner cafés, on a fixed weekly delivery schedule you set once and rely on every week. No walk-in counter, no retail queue — just consistent, French-technique pastry, produced to your calendar and invoiced as one clean weekly order.',
-  statSinceYear: '2019',
+    'Onista is a wholesale dessert kitchen in Jeddah: cakes, cheesecakes and entremets, basbousa, cookies and macarons — produced to order for our partner cafés on a fixed delivery schedule you set once and rely on every week. No walk-in counter, no retail queue: made to your calendar, consistent every time, and invoiced as one clear weekly order.',
   statPartnerCafes: '40+',
   statOnTimeRate: '72h',
   heroTaglineAr: 'شريكك الموثوق لتزويد كافيهات جدة يوميًا',

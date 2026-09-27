@@ -11,7 +11,6 @@ import { PageHeader, Panel } from './ui'
 type Content = {
   aboutBodyAr: string
   aboutBodyEn: string
-  statSinceYear: string
   statPartnerCafes: string
   statOnTimeRate: string
   heroTaglineAr: string
@@ -61,11 +60,7 @@ export default function ContentForm({ content }: { content: Content }) {
 
         <Panel className="p-6">
           <p className="mb-4 text-xs font-medium text-muted uppercase">{t('contentStatsSection')}</p>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <label className="block">
-              <span className="mb-1.5 block text-xs text-muted">{t('contentStatSince')}</span>
-              <input className="field" dir="ltr" value={f.statSinceYear} onChange={set('statSinceYear')} maxLength={20} placeholder="2019" />
-            </label>
+          <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
               <span className="mb-1.5 block text-xs text-muted">{t('contentStatCafes')}</span>
               <input className="field" dir="ltr" value={f.statPartnerCafes} onChange={set('statPartnerCafes')} maxLength={20} placeholder="40+" />

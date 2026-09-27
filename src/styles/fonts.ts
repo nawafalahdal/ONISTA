@@ -11,7 +11,8 @@ export const cormorant = Cormorant_Garamond({
 
 export const manrope = Manrope({
   subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700'],
+  // 800 carries the oversized stat figures in the About section.
+  weight: ['300', '400', '500', '600', '700', '800'],
   variable: '--font-manrope',
   display: 'swap',
 })

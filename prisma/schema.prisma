@@ -482,9 +482,8 @@ model SiteContent {
   aboutBodyAr String @db.VarChar(2000)
   aboutBodyEn String @db.VarChar(2000)
 
-  /// Short freeform values shown under the About section, e.g. "2019",
-  /// "40+", "72h" — same text in both locales (numbers/units, not prose).
-  statSinceYear    String @db.VarChar(20)
+  /// Short freeform values shown under the About section, e.g. "40+" and
+  /// "72h" — same text in both locales (numbers/units, not prose).
   statPartnerCafes String @db.VarChar(20)
   statOnTimeRate   String @db.VarChar(20)
 

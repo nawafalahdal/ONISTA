@@ -1,35 +1,13 @@
 'use client'
 
-import { useEffect, useId, useRef, useState } from 'react'
-import { getImageProps } from 'next/image'
+import { useId, useRef } from 'react'
 import { motion, useScroll, useSpring, useTransform, type MotionValue } from 'framer-motion'
 import { ArrowDown, ArrowRight, ArrowLeft, Coffee } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useLocale, useTranslations } from 'next-intl'
-import { INNER_ARCH, LogoMark } from '@/components/ui/logo'
+import { LogoMark } from '@/components/ui/logo'
 import { useDirection } from '@/hooks/use-direction'
 import { useMediaQuery } from '@/hooks/use-media-query'
-
-// Served through /_next/image so the CSP can keep img-src 'self'.
-const HERO_PHOTO = getImageProps({
-  src: 'https://images.unsplash.com/photo-1535141192574-5d4897c12636?auto=format&fit=crop&w=900&q=80',
-  alt: '',
-  width: 640,
-  height: 800,
-}).props.src
-
-function usePreloadedImage(src: string) {
-  const [ready, setReady] = useState(false)
-  useEffect(() => {
-    const img = new Image()
-    img.onload = () => setReady(true)
-    img.src = src
-    return () => {
-      img.onload = null
-    }
-  }, [src])
-  return ready
-}
 
 /** "40+" -> { prefix: '', target: 40, suffix: '+' }; null when there is no number to count. */
 function splitStat(value: string) {
@@ -40,27 +18,37 @@ function splitStat(value: string) {
 /**
  * A stat whose number counts up as the About section scrolls in and settles
  * on its final value. It is driven by scroll progress rather than a timer, so
- * it tracks the visitor exactly — scrolling back down winds it back.
+ * it tracks the visitor exactly — scrolling back up winds it back.
+ *
+ * The figure is drawn twice: a blurred copy underneath throws the glow, and
+ * the gradient-filled copy on top stays crisp.
  */
 function StatCounter({ value, label, progress }: { value: string; label: string; progress: MotionValue<number> }) {
   const parts = splitStat(value)
-  const counted = useTransform(progress, [0.6, 0.84], [0, parts?.target ?? 0])
+  const counted = useTransform(progress, [0.58, 0.86], [0, parts?.target ?? 0])
   const shown = useTransform(counted, (v) => String(Math.round(v)))
 
+  const figure = parts ? (
+    <>
+      {parts.prefix}
+      <motion.span>{shown}</motion.span>
+      {parts.suffix}
+    </>
+  ) : (
+    value
+  )
+
   return (
-    <div>
-      <dt className="font-display text-4xl font-medium text-rose-500 md:text-5xl dark:text-rose-400" dir="ltr">
-        {parts ? (
-          <>
-            {parts.prefix}
-            <motion.span>{shown}</motion.span>
-            {parts.suffix}
-          </>
-        ) : (
-          value
-        )}
+    <div className="relative">
+      <dt className="relative font-sans text-[clamp(2.75rem,5.5vw,4.25rem)] leading-none font-extrabold tracking-tight tabular-nums" dir="ltr">
+        <span aria-hidden className="absolute inset-0 select-none text-rose-500 opacity-70 blur-[18px]">
+          {figure}
+        </span>
+        <span className="relative bg-gradient-to-b from-rose-200 via-rose-400 to-rose-600 bg-clip-text text-transparent dark:from-white dark:via-rose-300 dark:to-rose-600">
+          {figure}
+        </span>
       </dt>
-      <dd className="mt-1 text-[11px] tracking-[0.2em] text-muted uppercase">{label}</dd>
+      <dd className="mt-2 text-[11px] tracking-[0.18em] text-muted uppercase">{label}</dd>
     </div>
   )
 }
@@ -82,7 +70,6 @@ function useReveal(progress: MotionValue<number>, start: number) {
 type SiteContent = {
   aboutBodyAr: string
   aboutBodyEn: string
-  statSinceYear: string
   statPartnerCafes: string
   statOnTimeRate: string
   heroTaglineAr: string
@@ -106,10 +93,9 @@ export default function HeroAbout({
   const { rtl, sign } = useDirection()
   const { resolvedTheme } = useTheme()
   const trackRef = useRef<HTMLElement>(null)
-  const clipId = useId()
+  const ringId = useId()
   const isDesktop = useMediaQuery('(min-width: 768px)')
-  const photoReady = usePreloadedImage(HERO_PHOTO)
-  const textColor = resolvedTheme === 'light' ? '#1d1518' : '#f4ece4'
+  const emblemRestColor = resolvedTheme === 'light' ? '#1d1518' : '#ffffff'
 
   const { scrollYProgress } = useScroll({ target: trackRef, offset: ['start start', 'end end'] })
   const p = useSpring(scrollYProgress, { stiffness: 140, damping: 30, mass: 0.35 })
@@ -131,13 +117,8 @@ export default function HeroAbout({
   // hero emblem was enlarged.
   const emblemScale = useTransform(p, [0, 0.6], isDesktop ? [1, 1.06] : [1, 0.85])
   const emblemRotate = useTransform(p, [0, 0.6], [0, -2 * sign])
-  const emblemColor = useTransform(p, [0.35, 0.65], ['#e0337f', textColor])
+  const emblemColor = useTransform(p, [0.35, 0.65], ['#e0337f', emblemRestColor])
 
-  // Line-art interior dissolves; photograph fades in inside the arch. If the
-  // photo can't load, the illustration simply stays.
-  const interiorOpacity = useTransform(p, [0.3, 0.55], photoReady ? [1, 0] : [1, 1])
-  const photoOpacity = useTransform(p, [0.35, 0.62], photoReady ? [0, 1] : [0, 0])
-  const photoScale = useTransform(p, [0.35, 1], [1.25, 1])
   const ringOpacity = useTransform(p, [0, 0.25], [1, 0])
   const glowScale = useTransform(p, [0, 1], [1, 1.6])
 
@@ -150,7 +131,6 @@ export default function HeroAbout({
   const cueOpacity = useTransform(p, [0, 0.08], [1, 0])
 
   const stats = [
-    { value: content.statSinceYear, label: ta('statEst') },
     { value: content.statPartnerCafes, label: ta('statCafes') },
     { value: content.statOnTimeRate, label: ta('statDough') },
   ]
@@ -218,7 +198,7 @@ export default function HeroAbout({
                 aria-hidden="true"
               >
                 <defs>
-                  <path id={`${clipId}-ring`} d="M150 150m-130 0a130 130 0 1 1 260 0a130 130 0 1 1 -260 0" />
+                  <path id={`${ringId}-ring`} d="M150 150m-130 0a130 130 0 1 1 260 0a130 130 0 1 1 -260 0" />
                 </defs>
                 <text
                   fontSize={rtl ? 13 : 11}
@@ -226,42 +206,14 @@ export default function HeroAbout({
                   fill="currentColor"
                   className={rtl ? 'font-arabic' : 'font-sans uppercase'}
                 >
-                  <textPath href={`#${clipId}-ring`}>{t('ring')}</textPath>
+                  <textPath href={`#${ringId}-ring`}>{t('ring')}</textPath>
                 </text>
               </motion.svg>
 
               <LogoMark
                 className="relative h-[32vh] max-h-[440px] min-h-[200px] w-auto drop-shadow-[0_0_48px_rgba(224,51,127,0.4)] md:h-[40vh]"
                 strokeWidth={2}
-                interiorStyle={{ opacity: interiorOpacity }}
-              >
-                <defs>
-                  <clipPath id={`${clipId}-arch`}>
-                    <path d={INNER_ARCH} />
-                  </clipPath>
-                </defs>
-                <g clipPath={`url(#${clipId}-arch)`}>
-                  <motion.rect
-                    x="30"
-                    y="30"
-                    width="140"
-                    height="176"
-                    stroke="none"
-                    style={{ opacity: photoOpacity, fill: 'var(--c-ink-3)' }}
-                  />
-                  {photoReady && (
-                    <motion.image
-                      href={HERO_PHOTO}
-                      x="30"
-                      y="30"
-                      width="140"
-                      height="176"
-                      preserveAspectRatio="xMidYMid slice"
-                      style={{ opacity: photoOpacity, scale: photoScale, transformOrigin: '100px 118px' }}
-                    />
-                  )}
-                </g>
-              </LogoMark>
+              />
             </motion.div>
           </motion.div>
         </div>
@@ -287,7 +239,7 @@ export default function HeroAbout({
             <motion.p style={a3} className="mt-5 max-w-lg text-sm leading-relaxed text-muted md:text-base">
               {aboutBody}
             </motion.p>
-            <motion.dl style={a4} className="mt-8 hidden grid-cols-3 gap-6 border-t border-line pt-6 sm:grid">
+            <motion.dl style={a4} className="mt-10 grid grid-cols-2 gap-8 border-t border-line pt-8">
               {stats.map((s) => (
                 <StatCounter key={s.label} value={s.value} label={s.label} progress={p} />
               ))}

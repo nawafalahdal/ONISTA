@@ -178,6 +178,7 @@ export default function ScheduleBuilder({
         <p className="mt-1 text-sm text-muted">{mode === 'weekly' ? t('subtitle') : t('oneOffSubtitle')}</p>
         <p className="mt-2 text-xs text-muted/80">{t('leadTimeNotice', { days: minLeadDays })}</p>
         <p className="mt-1 text-xs text-muted/80">{t('timeWindowNotice')}</p>
+        <p className="mt-1 text-xs text-muted/80">{t('jeddahOnly')}</p>
       </div>
 
       <div className="inline-flex rounded-2xl border border-line bg-ink-2 p-1">

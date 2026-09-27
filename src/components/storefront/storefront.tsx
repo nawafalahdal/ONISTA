@@ -21,7 +21,6 @@ import Footer from './footer'
 type SiteContent = {
   aboutBodyAr: string
   aboutBodyEn: string
-  statSinceYear: string
   statPartnerCafes: string
   statOnTimeRate: string
   heroTaglineAr: string
