@@ -8,10 +8,11 @@ import type { CatalogProduct } from '@/server/queries/catalog'
 import { submitTastingRequest } from '@/server/actions/tasting-requests'
 import { MAX_TASTING_ITEMS, MAX_TASTING_ITEMS_FREE } from '@/lib/validation/tasting-request'
 import { formatSar } from '@/lib/money'
+import { JEDDAH } from '@/lib/constants'
 import { CloseButton, Modal } from '@/components/ui/overlay'
 import SmartImage from '@/components/ui/smart-image'
 
-const emptyForm = { cafeName: '', phone: '', city: '', notes: '' }
+const emptyForm = { cafeName: '', phone: '', city: '', locationUrl: '', notes: '' }
 type Phase = 'form' | 'generating' | 'done'
 
 export default function TastingModal({
@@ -35,7 +36,7 @@ export default function TastingModal({
   const [phase, setPhase] = useState<Phase>('form')
   const [errors, setErrors] = useState<Record<string, string[]>>({})
   const [formError, setFormError] = useState<string | null>(null)
-  const [result, setResult] = useState<{ ref: string | null; link: string | null }>({ ref: null, link: null })
+  const [result, setResult] = useState<{ ref: string | null; link: string | null; text: string | null }>({ ref: null, link: null, text: null })
   const [copied, setCopied] = useState(false)
 
   const toggle = (id: string) =>
@@ -66,6 +67,8 @@ export default function TastingModal({
     }
     const data = new FormData()
     Object.entries(form).forEach(([k, v]) => data.set(k, v))
+    // The city field is display-only: Onista delivers within Jeddah alone.
+    data.set('city', JEDDAH[locale] ?? JEDDAH.ar!)
     selected.forEach((id) => data.append('productIds', id))
     data.set('locale', locale)
     data.set('website', website)
@@ -79,6 +82,7 @@ export default function TastingModal({
         setResult({
           ref: res.data.requestNumber ? `TST-${res.data.requestNumber}` : null,
           link: res.data.whatsappUrl,
+          text: res.data.whatsappText,
         })
         setPhase('done')
       } else {
@@ -93,9 +97,9 @@ export default function TastingModal({
   }
 
   const copy = async () => {
-    if (!result.link) return
+    if (!result.text) return
     try {
-      await navigator.clipboard.writeText(result.link)
+      await navigator.clipboard.writeText(result.text)
       setCopied(true)
       setTimeout(() => setCopied(false), 1600)
     } catch {
@@ -196,10 +200,22 @@ export default function TastingModal({
                 />
               </Field>
               <Field label={t('city')} error={err('city')}>
-                <input className="field" value={form.city} onChange={set('city')} placeholder={t('cityPh')} maxLength={60} />
+                <input className="field cursor-not-allowed opacity-70" value={JEDDAH[locale] ?? JEDDAH.ar} readOnly />
+                <span className="mt-1 block text-[11px] text-muted/80">{t('jeddahOnly')}</span>
+              </Field>
+              <Field label={t('locationUrl')} error={err('locationUrl')}>
+                <input
+                  className="field"
+                  type="url"
+                  dir="ltr"
+                  value={form.locationUrl}
+                  onChange={set('locationUrl')}
+                  placeholder="https://maps.app.goo.gl/..."
+                  maxLength={500}
+                />
               </Field>
               <Field label={t('notes')} error={err('notes')}>
-                <input className="field" value={form.notes} onChange={set('notes')} placeholder={t('notesPh')} maxLength={500} />
+                <input className="field sm:col-span-2" value={form.notes} onChange={set('notes')} placeholder={t('notesPh')} maxLength={500} />
               </Field>
             </div>
 
@@ -257,11 +273,12 @@ export default function TastingModal({
             {result.link && (
               <>
                 <div className="mt-6 rounded-2xl border border-line bg-ink p-4 text-start">
-                  <p className="text-[10px] tracking-[0.25em] text-muted uppercase">{t('generatedLink')}</p>
-                  <p className="mt-2 max-h-24 overflow-y-auto font-mono text-xs leading-relaxed break-all text-rose-600 dark:text-rose-200/80" dir="ltr">
-                    {result.link}
+                  <p className="text-[10px] tracking-[0.25em] text-muted uppercase">{t('messagePreview')}</p>
+                  <p className="mt-2 max-h-56 overflow-y-auto text-[13px] leading-relaxed whitespace-pre-wrap text-cream/90">
+                    {result.text}
                   </p>
                 </div>
+                <p className="mt-3 text-xs text-muted">{t('sendHint')}</p>
                 <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
                   <a
                     href={result.link}

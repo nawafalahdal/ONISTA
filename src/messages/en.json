@@ -64,14 +64,17 @@
     "submit": "Generate WhatsApp request",
     "generating": "Preparing your WhatsApp message…",
     "doneTitle": "Your request is ready",
-    "doneBody": "We've logged it for our wholesale team. Send the pre-filled message on WhatsApp to confirm your tasting slot.",
+    "doneBody": "Your request is in the system. Send the prepared message on WhatsApp so the kitchen is notified and can confirm your tasting slot.",
     "reference": "Request {ref}",
-    "generatedLink": "Generated link",
-    "openWhatsapp": "Open WhatsApp",
-    "copy": "Copy link",
-    "copied": "Copied",
+    "openWhatsapp": "Send on WhatsApp",
+    "copy": "Copy message",
+    "copied": "Message copied",
     "freeNote": "The first {count} samples are free, each extra one is {amount}.",
-    "extraFeeNote": "{count, plural, one {# extra sample} other {# extra samples}} · {amount} added to your request."
+    "extraFeeNote": "{count, plural, one {# extra sample} other {# extra samples}} · {amount} added to your request.",
+    "locationUrl": "Shop location link (Google Maps)",
+    "jeddahOnly": "We currently serve Jeddah only.",
+    "messagePreview": "Your message",
+    "sendHint": "Tap “Send on WhatsApp” to notify the kitchen of your request through the system."
   },
   "Footer": {
     "tagline": "A dedicated wholesale kitchen supplying signature cakes and pastry to Jeddah's best cafés, on a fixed weekly schedule.",
@@ -503,7 +506,10 @@
     "kitchenMapsUrlHint": "Shown to the driver as the pickup destination once an order is ready.",
     "markUrgent": "Urgent delivery",
     "urgentOn": "Urgent delivery enabled",
-    "urgentOff": "Urgent delivery cleared"
+    "urgentOff": "Urgent delivery cleared",
+    "tastingFee": "Extra sample price for this item (SAR)",
+    "tastingFeePh": "Default price",
+    "tastingFeeHint": "Leave blank to use the default price from scheduling settings."
   },
   "Driver": {
     "portalTitle": "Driver",

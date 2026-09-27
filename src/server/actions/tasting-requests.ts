@@ -4,14 +4,17 @@ import { env } from '@/env'
 import { fail, ok, type ActionResult } from '@/lib/action-result'
 import { fieldErrors } from '@/lib/validation/common'
 import { MAX_TASTING_ITEMS_FREE, tastingNotesSchema, tastingRequestSchema, tastingStatusSchema } from '@/lib/validation/tasting-request'
-import { buildTastingWhatsAppUrl } from '@/lib/whatsapp'
+import { buildTastingWhatsApp } from '@/lib/whatsapp'
 import { db } from '@/server/db'
 import { guardStaffAction } from '@/server/dal/guard'
 import { audit } from '@/server/security/audit'
 import { rateLimit } from '@/server/security/rate-limit'
 import { getClientIp, hashIp } from '@/server/security/request'
 
-export type TastingSubmitResult = ActionResult<{ requestNumber: number; whatsappUrl: string } | { requestNumber: null; whatsappUrl: null }>
+export type TastingSubmitResult = ActionResult<
+  | { requestNumber: number; whatsappUrl: string; whatsappText: string }
+  | { requestNumber: null; whatsappUrl: null; whatsappText: null }
+>
 
 /**
  * PUBLIC action behind the "طلب تجربة للكافيه" form. Compatible with
@@ -19,7 +22,7 @@ export type TastingSubmitResult = ActionResult<{ requestNumber: number; whatsapp
  */
 export async function submitTastingRequest(_prev: TastingSubmitResult | null, formData: FormData): Promise<TastingSubmitResult> {
   // 1. Honeypot: bots fill every field. Pretend success, store nothing.
-  if (formData.get('website')) return ok({ requestNumber: null, whatsappUrl: null })
+  if (formData.get('website')) return ok({ requestNumber: null, whatsappUrl: null, whatsappText: null })
 
   // 2. Rate limit per IP before doing any work.
   const ip = await getClientIp()
@@ -32,6 +35,7 @@ export async function submitTastingRequest(_prev: TastingSubmitResult | null, fo
     phone: formData.get('phone'),
     email: formData.get('email'),
     city: formData.get('city'),
+    locationUrl: formData.get('locationUrl'),
     notes: formData.get('notes'),
     productIds: formData.getAll('productIds'),
     locale: formData.get('locale') ?? undefined,
@@ -45,17 +49,25 @@ export async function submitTastingRequest(_prev: TastingSubmitResult | null, fo
   // 5. Never trust client-supplied IDs: re-check each item is currently offered.
   const products = await db.product.findMany({
     where: { id: { in: productIds }, archivedAt: null, inStock: true, isTastingMenu: true },
-    select: { id: true, translations: { where: { locale }, select: { title: true } } },
+    select: { id: true, tastingFeeHalalas: true, translations: { where: { locale }, select: { title: true } } },
   })
   if (products.length !== productIds.length || products.some((p) => !p.translations[0])) {
     return fail('unavailableSamples', { productIds: ['unavailableSamples'] })
   }
 
   // 6. Anything past the free allowance is billed at the live admin-set rate —
-  //    never at a price the client could have sent us.
+  //    never at a price the client could have sent us. Each item carries its
+  //    own price when the admin set one; the rest fall back to the default.
+  //    The free allowance is applied to the dearest picks, so the café pays
+  //    the smallest possible amount for going over.
   const settings = await db.schedulingSettings.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } })
-  const extraSamplesCount = Math.max(0, products.length - MAX_TASTING_ITEMS_FREE)
-  const extraFeeHalalas = extraSamplesCount * settings.tastingExtraFeeHalalas
+  const feeOf = (p: { tastingFeeHalalas: number | null }) => p.tastingFeeHalalas ?? settings.tastingExtraFeeHalalas
+  const paidFees = products
+    .map(feeOf)
+    .sort((a, b) => b - a)
+    .slice(MAX_TASTING_ITEMS_FREE)
+  const extraSamplesCount = paidFees.length
+  const extraFeeHalalas = paidFees.reduce((sum, fee) => sum + fee, 0)
 
   const request = await db.tastingRequest.create({
     data: {
@@ -68,17 +80,17 @@ export async function submitTastingRequest(_prev: TastingSubmitResult | null, fo
         create: products.map((p) => ({ productId: p.id, titleSnapshot: p.translations[0]!.title })),
       },
     },
-    select: { requestNumber: true, cafeName: true, phone: true, city: true, notes: true },
+    select: { requestNumber: true, cafeName: true, phone: true, city: true, notes: true, locationUrl: true },
   })
 
-  // 7. The WhatsApp link is built server-side from validated, stored data.
-  const whatsappUrl = buildTastingWhatsAppUrl(env.BUSINESS_WHATSAPP_NUMBER, {
+  // 7. The WhatsApp message is built server-side from validated, stored data.
+  const whatsapp = buildTastingWhatsApp(env.BUSINESS_WHATSAPP_NUMBER, {
     ...request,
     items: products.map((p) => p.translations[0]!.title),
     extraSamplesCount,
     extraFeeHalalas,
   })
-  return ok({ requestNumber: request.requestNumber, whatsappUrl })
+  return ok({ requestNumber: request.requestNumber, whatsappUrl: whatsapp.url, whatsappText: whatsapp.text })
 }
 
 /** STAFF: move a request through NEW → CONTACTED → SCHEDULED → CONVERTED / DECLINED. */

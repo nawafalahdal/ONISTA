@@ -37,6 +37,15 @@ export const productInputSchema = z.object({
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, { error: 'invalidSlug' }),
   categoryId: id,
   priceHalalas: price,
+  /**
+   * Blank falls back to the global extra-sample fee in scheduling settings.
+   * Resolves to null rather than undefined so clearing the field actually
+   * clears the stored override instead of leaving the old one in place.
+   */
+  tastingFeeHalalas: z.preprocess(
+    (v) => (v == null || (typeof v === 'string' && v.trim() === '') ? null : v),
+    z.coerce.number({ error: MSG.invalid }).min(0).max(100_000, { error: MSG.invalid }).transform(sarToHalalas).nullable(),
+  ),
   inStock: checkbox,
   isTastingMenu: checkbox,
   isSchedulable: checkbox,

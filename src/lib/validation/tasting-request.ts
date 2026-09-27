@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { MSG, email, id, localeSchema, optional, phone, text } from './common'
+import { MSG, email, googleMapsUrl, id, localeSchema, optional, phone, text } from './common'
 
 /** Samples included at no charge; anything beyond this is billed per extra sample. */
 export const MAX_TASTING_ITEMS_FREE = 3
@@ -12,6 +12,7 @@ export const tastingRequestSchema = z.object({
   phone,
   email: optional(email),
   city: optional(text({ max: 60 })),
+  locationUrl: optional(googleMapsUrl),
   notes: optional(text({ max: 500, multiline: true })),
   productIds: z
     .preprocess(

@@ -245,6 +245,7 @@ function ProductForm({
     badgeAr: initial?.translations.ar.badge ?? '',
     slug: initial?.slug ?? '',
     price: initial ? String(halalasToSar(initial.priceHalalas)) : '',
+    tastingFee: initial?.tastingFeeHalalas != null ? String(halalasToSar(initial.tastingFeeHalalas)) : '',
     categoryId: initial?.categoryId ?? categories[0]?.id ?? '',
     image: initial?.images[0]?.url ?? '',
     inStock: initial?.inStock ?? true,
@@ -273,6 +274,7 @@ function ProductForm({
       slug: f.slug,
       categoryId: f.categoryId,
       priceHalalas: f.price, // entered in SAR; the schema converts to halalas
+      tastingFeeHalalas: f.tastingFee, // blank clears the per-item override
       inStock: f.inStock,
       isSchedulable: f.isSchedulable,
       isTastingMenu: f.isTastingMenu,
@@ -329,6 +331,10 @@ function ProductForm({
         <div className="grid grid-cols-2 gap-4">
           <FormField label={t('price')} error={err('priceHalalas')}>
             <input className="field" dir="ltr" type="number" min="1" step="0.5" value={f.price} onChange={set('price')} />
+          </FormField>
+          <FormField label={t('tastingFee')} error={err('tastingFeeHalalas')}>
+            <input className="field" dir="ltr" type="number" min="0" step="0.5" value={f.tastingFee} onChange={set('tastingFee')} placeholder={t('tastingFeePh')} />
+            <span className="mt-1 block text-[11px] text-muted/80">{t('tastingFeeHint')}</span>
           </FormField>
           <FormField label={t('category')} error={err('categoryId')}>
             <select className="field" value={f.categoryId} onChange={set('categoryId')}>

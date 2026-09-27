@@ -131,7 +131,7 @@ export async function listAdminProducts(locale: Locale) {
     where: { archivedAt: null },
     orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
     select: {
-      id: true, slug: true, priceHalalas: true, inStock: true, isTastingMenu: true, isSchedulable: true, isFeatured: true,
+      id: true, slug: true, priceHalalas: true, tastingFeeHalalas: true, inStock: true, isTastingMenu: true, isSchedulable: true, isFeatured: true,
       sortOrder: true, categoryId: true,
       category: { select: { translations: { where: { locale }, select: { name: true } }, slug: true } },
       translations: { select: { locale: true, title: true, description: true, badge: true } },
