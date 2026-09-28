@@ -48,3 +48,15 @@ export const setCafeActiveSchema = z.object({ id, isActive: z.boolean() })
 
 export const deleteCafeAddressSchema = z.object({ id })
 export const setDefaultCafeAddressSchema = z.object({ id })
+
+/**
+ * A manual wallet correction. Signed: negative deducts. Entered in SAR and
+ * stored as halalas, like every other amount. The reason is mandatory —
+ * moving money by hand without a stated cause is exactly what an audit trail
+ * exists to prevent.
+ */
+export const adjustWalletSchema = z.object({
+  cafeId: id,
+  deltaSar: z.coerce.number({ error: MSG.invalid }).refine((n) => n !== 0, { error: MSG.invalid }).min(-100_000).max(100_000),
+  reason: text({ min: 3, max: 200 }),
+})

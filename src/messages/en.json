@@ -123,7 +123,8 @@
     "tooEarly": "It is still too early to collect this delivery.",
     "passwordTooShort": "Password must be at least 12 characters.",
     "passwordTooWeak": "Password must combine at least 3 of: lowercase, uppercase, digits, symbols.",
-    "cancellationTooLate": "Too late to cancel: the kitchen has started preparing this order. Please contact us."
+    "cancellationTooLate": "Too late to cancel: the kitchen has started preparing this order. Please contact us.",
+    "walletWouldGoNegative": "The balance cannot go below zero."
   },
   "Account": {
     "portalTitle": "Partner Portal",
@@ -227,7 +228,14 @@
       "returnReasonLabel": "What didn't match the agreement?",
       "returnReasonPh": "Describe the issue…",
       "returnSubmitted": "Return request submitted",
-      "submitReturn": "Submit return request"
+      "submitReturn": "Submit return request",
+      "cancelOrder": "Cancel order",
+      "cancelConfirmBody": "This cancels the order and all of its deliveries. It cannot be undone.",
+      "cancelCreditLabel": "Credited to your balance immediately",
+      "cancelCreditNote": "Credit applies straight to your next order — no waiting on a bank refund.",
+      "cancelKeep": "Keep it",
+      "cancelConfirm": "Yes, cancel it",
+      "cancelDone": "Order cancelled and the amount added to your credit"
     },
     "Addresses": {
       "title": "Delivery addresses",
@@ -252,7 +260,8 @@
     "Overview": {
       "totalOrders": "Total orders",
       "totalSpent": "Total spent",
-      "upcoming": "Upcoming deliveries"
+      "upcoming": "Upcoming deliveries",
+      "wallet": "Your Onista credit"
     },
     "Profile": {
       "title": "Profile",
@@ -516,7 +525,14 @@
     "stepStartPrep": "Start preparing",
     "stepMarkReady": "Mark ready",
     "stepAwaitingDriver": "Awaiting driver",
-    "stepWithDriver": "With the driver"
+    "stepWithDriver": "With the driver",
+    "colWallet": "Credit",
+    "walletAdjust": "Adjust credit",
+    "walletCurrent": "Current balance",
+    "walletDelta": "Amount (SAR) — negative to deduct",
+    "walletDeltaHint": "e.g. 50 to add, or -50 to deduct. The balance cannot go below zero.",
+    "walletReason": "Reason (recorded in the audit log)",
+    "walletAdjusted": "Credit adjusted"
   },
   "Driver": {
     "portalTitle": "Driver",

@@ -5,7 +5,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Building2, KeyRound, MapPin, Plus } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import type { AdminCafe } from '@/server/queries/admin'
-import { createCafeAccount, resetCafePassword, setCafeActive } from '@/server/actions/cafes'
+import { adjustCafeWallet, createCafeAccount, resetCafePassword, setCafeActive } from '@/server/actions/cafes'
+import { formatSar } from '@/lib/money'
 import { CloseButton, Drawer } from '@/components/ui/overlay'
 import Toast from '@/components/ui/toast'
 import { useAdminAction } from '@/hooks/use-admin-action'
@@ -14,8 +15,10 @@ import { JEDDAH } from '@/lib/constants'
 import { EmptyRow, PageHeader, Panel, Toggle } from './ui'
 
 export default function ClientsManager({ cafes, prefill }: { cafes: AdminCafe[]; prefill?: { cafeName: string; phone: string } }) {
+  const [walletTarget, setWalletTarget] = useState<AdminCafe | null>(null)
   const t = useTranslations('Admin')
   const format = useFormatter()
+  const locale = useLocale() as 'ar' | 'en'
   const { toast, notify } = useToast()
   const { run, pending } = useAdminAction(notify)
   const [creating, setCreating] = useState(Boolean(prefill))
@@ -38,6 +41,7 @@ export default function ClientsManager({ cafes, prefill }: { cafes: AdminCafe[];
                 <th className="px-5 py-3 text-start font-medium">{t('colContact')}</th>
                 <th className="px-5 py-3 text-start font-medium">{t('colPhone')}</th>
                 <th className="px-5 py-3 text-center font-medium">{t('colOrders')}</th>
+                <th className="px-5 py-3 text-center font-medium">{t('colWallet')}</th>
                 <th className="px-5 py-3 text-start font-medium">{t('colJoined')}</th>
                 <th className="px-5 py-3 text-center font-medium">{t('colActive')}</th>
                 <th className="px-5 py-3" />
@@ -64,6 +68,19 @@ export default function ClientsManager({ cafes, prefill }: { cafes: AdminCafe[];
                       {c.contactPhone}
                     </td>
                     <td className="px-5 py-3 text-center tabular-nums">{c.orderCount}</td>
+                    <td className="px-5 py-3 text-center">
+                      <button
+                        type="button"
+                        onClick={() => setWalletTarget(c)}
+                        title={t('walletAdjust')}
+                        className={`rounded-full px-2.5 py-1 text-xs tabular-nums transition hover:brightness-110 ${
+                          c.walletBalanceHalalas > 0 ? 'bg-rose-600/15 text-rose-500 dark:text-rose-300' : 'text-muted hover:text-cream'
+                        }`}
+                        dir="ltr"
+                      >
+                        {formatSar(c.walletBalanceHalalas, locale)}
+                      </button>
+                    </td>
                     <td className="px-5 py-3 text-muted">{format.dateTime(c.createdAt, { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                     <td className="px-5 py-3 text-center">
                       <Toggle
@@ -109,6 +126,7 @@ export default function ClientsManager({ cafes, prefill }: { cafes: AdminCafe[];
         <CreateClientForm prefill={prefill} onCancel={() => setCreating(false)} onCreated={(name) => { notify(t('clientCreated', { name })); setCreating(false) }} />
       </Drawer>
 
+      <AdjustWalletModal cafe={walletTarget} onClose={() => setWalletTarget(null)} notify={notify} />
       <ResetPasswordModal cafe={resetTarget} onClose={() => setResetTarget(null)} notify={notify} />
       <Toast message={toast} />
     </div>
@@ -304,5 +322,78 @@ function Field({ label, error, children }: { label: string; error?: string; chil
       {children}
       {error && <span className="mt-1 block text-xs text-rose-500">{error}</span>}
     </label>
+  )
+}
+
+/**
+ * Manual store-credit correction. Signed, so one field covers both a goodwill
+ * top-up and clawing back a mistake, and the reason is required — this is a
+ * hand-moved balance, and the audit log should never have to guess why.
+ */
+function AdjustWalletModal({ cafe, onClose, notify }: { cafe: AdminCafe | null; onClose: () => void; notify: (t: string) => void }) {
+  const t = useTranslations('Admin')
+  const locale = useLocale() as 'ar' | 'en'
+  const { run, pending } = useAdminAction(notify)
+  const [delta, setDelta] = useState('')
+  const [reason, setReason] = useState('')
+
+  if (!cafe) return null
+  const close = () => {
+    onClose()
+    setDelta('')
+    setReason('')
+  }
+  const amount = Number(delta)
+  const valid = delta !== '' && Number.isFinite(amount) && amount !== 0 && reason.trim().length >= 3
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" onClick={close}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-3xl border border-line bg-ink-2 p-6">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-2xl">{t('walletAdjust')}</h2>
+          <CloseButton onClick={close} />
+        </div>
+        <p className="mt-1 text-sm text-muted">{cafe.cafeName}</p>
+
+        <div className="mt-4 rounded-2xl border border-line bg-ink p-4">
+          <p className="text-xs text-muted">{t('walletCurrent')}</p>
+          <p className="mt-1 font-display text-3xl" dir="ltr">
+            {formatSar(cafe.walletBalanceHalalas, locale)}
+          </p>
+        </div>
+
+        <label className="mt-4 block">
+          <span className="mb-1.5 block text-xs text-muted">{t('walletDelta')}</span>
+          <input
+            className="field"
+            dir="ltr"
+            type="number"
+            step="0.5"
+            placeholder="50  /  -50"
+            value={delta}
+            onChange={(e) => setDelta(e.target.value)}
+          />
+          <span className="mt-1 block text-[11px] text-muted/80">{t('walletDeltaHint')}</span>
+        </label>
+
+        <label className="mt-3 block">
+          <span className="mb-1.5 block text-xs text-muted">{t('walletReason')}</span>
+          <input className="field" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={200} />
+        </label>
+
+        <button
+          type="button"
+          disabled={pending || !valid}
+          onClick={() =>
+            run(() => adjustCafeWallet({ cafeId: cafe.id, deltaSar: amount, reason }), t('walletAdjusted'), (res) => {
+              if (res.ok) close()
+            })
+          }
+          className="btn-primary mt-5 w-full py-3"
+        >
+          {t('walletAdjust')}
+        </button>
+      </div>
+    </div>
   )
 }

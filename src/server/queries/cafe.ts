@@ -19,7 +19,7 @@ export type CafeAddressRow = Awaited<ReturnType<typeof getCafeAddresses>>[number
 
 export async function getCafeOrders() {
   const user = await requireCafePage()
-  return db.order.findMany({
+  const orders = await db.order.findMany({
     where: { cafeId: user.cafeId },
     orderBy: { createdAt: 'desc' },
     take: 100,
@@ -35,6 +35,16 @@ export async function getCafeOrders() {
       },
     },
   })
+
+  // Eligibility is decided here, not in the browser, and mirrors the guards in
+  // cancelOwnOrder: nothing may be cancelled once the kitchen has started.
+  return orders.map((o) => ({
+    ...o,
+    canCancel:
+      (o.status === 'PENDING_PAYMENT' || o.status === 'CONFIRMED') &&
+      o.deliveries.length > 0 &&
+      o.deliveries.every((d) => d.status === 'PENDING'),
+  }))
 }
 export type CafeOrder = Awaited<ReturnType<typeof getCafeOrders>>[number]
 
@@ -42,7 +52,7 @@ export type CafeOrder = Awaited<ReturnType<typeof getCafeOrders>>[number]
 export async function getCafeOverview() {
   const user = await requireCafePage()
   const { todayISO } = await getSchedulingContext()
-  const [orderStats, upcomingCount] = await Promise.all([
+  const [orderStats, upcomingCount, profile] = await Promise.all([
     db.order.aggregate({
       where: { cafeId: user.cafeId, status: { not: 'CANCELLED' } },
       _count: true,
@@ -55,11 +65,13 @@ export async function getCafeOverview() {
         status: { notIn: ['CANCELLED', 'DELIVERED'] },
       },
     }),
+    db.cafeProfile.findUniqueOrThrow({ where: { id: user.cafeId }, select: { walletBalanceHalalas: true } }),
   ])
   return {
     totalOrders: orderStats._count,
     totalSpentHalalas: orderStats._sum.totalHalalas ?? 0,
     upcomingDeliveries: upcomingCount,
+    walletBalanceHalalas: profile.walletBalanceHalalas,
   }
 }
 

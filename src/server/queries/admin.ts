@@ -166,6 +166,7 @@ export async function listCafes() {
     orderBy: { createdAt: 'desc' },
     select: {
       id: true, cafeName: true, contactName: true, contactPhone: true, contactEmail: true, googleMapsUrl: true, createdAt: true,
+      walletBalanceHalalas: true,
       user: { select: { isActive: true, lastLoginAt: true, mustChangePassword: true } },
       _count: { select: { orders: true } },
     },
@@ -182,6 +183,7 @@ export async function listCafes() {
     lastLoginAt: c.user.lastLoginAt,
     mustChangePassword: c.user.mustChangePassword,
     orderCount: c._count.orders,
+    walletBalanceHalalas: c.walletBalanceHalalas,
   }))
 }
 export type AdminCafe = Awaited<ReturnType<typeof listCafes>>[number]

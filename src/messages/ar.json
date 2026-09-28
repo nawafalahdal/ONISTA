@@ -123,7 +123,8 @@
     "tooEarly": "ما زال الوقت مبكرًا على استلام هذا الطلب.",
     "passwordTooShort": "كلمة المرور يجب أن تكون ١٢ حرفًا على الأقل.",
     "passwordTooWeak": "كلمة المرور يجب أن تجمع ٣ على الأقل من: حروف صغيرة، حروف كبيرة، أرقام، رموز.",
-    "cancellationTooLate": "لا يمكن الإلغاء: بدأ المطبخ في تجهيز هذا الطلب. تواصل معنا."
+    "cancellationTooLate": "لا يمكن الإلغاء: بدأ المطبخ في تجهيز هذا الطلب. تواصل معنا.",
+    "walletWouldGoNegative": "لا يمكن أن ينزل الرصيد تحت الصفر."
   },
   "Account": {
     "portalTitle": "بوابة الشركاء",
@@ -227,7 +228,14 @@
       "returnReasonLabel": "ما الذي لم يطابق الاتفاق؟",
       "returnReasonPh": "صف المشكلة…",
       "returnSubmitted": "تم إرسال طلب الاسترجاع",
-      "submitReturn": "إرسال طلب الاسترجاع"
+      "submitReturn": "إرسال طلب الاسترجاع",
+      "cancelOrder": "إلغاء الطلب",
+      "cancelConfirmBody": "سيتم إلغاء هذا الطلب وكل توصيلاته. لا يمكن التراجع عن هذه الخطوة.",
+      "cancelCreditLabel": "سيُضاف إلى رصيدك فورًا",
+      "cancelCreditNote": "الرصيد يُستخدم مباشرة في طلبك القادم — بدون انتظار استرجاع بنكي.",
+      "cancelKeep": "تراجع",
+      "cancelConfirm": "نعم، ألغِ الطلب",
+      "cancelDone": "تم إلغاء الطلب وإضافة المبلغ إلى رصيدك"
     },
     "Addresses": {
       "title": "عناوين التوصيل",
@@ -252,7 +260,8 @@
     "Overview": {
       "totalOrders": "إجمالي الطلبات",
       "totalSpent": "إجمالي المصروف",
-      "upcoming": "توصيلات قادمة"
+      "upcoming": "توصيلات قادمة",
+      "wallet": "رصيدك لدى أونيستا"
     },
     "Profile": {
       "title": "الملف الشخصي",
@@ -516,7 +525,14 @@
     "stepStartPrep": "ابدأ التجهيز",
     "stepMarkReady": "جاهز للاستلام",
     "stepAwaitingDriver": "بانتظار السائق",
-    "stepWithDriver": "مع السائق"
+    "stepWithDriver": "مع السائق",
+    "colWallet": "الرصيد",
+    "walletAdjust": "تعديل الرصيد",
+    "walletCurrent": "الرصيد الحالي",
+    "walletDelta": "المبلغ (ر.س) — بالسالب للخصم",
+    "walletDeltaHint": "مثال: ٥٠ للإضافة، أو ‎-٥٠‎ للخصم. لا يمكن أن ينزل الرصيد تحت الصفر.",
+    "walletReason": "السبب (يُسجّل في سجل التدقيق)",
+    "walletAdjusted": "تم تعديل الرصيد"
   },
   "Driver": {
     "portalTitle": "السائق",

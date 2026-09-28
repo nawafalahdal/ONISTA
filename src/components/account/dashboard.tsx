@@ -1,7 +1,7 @@
 'use client'
 
 import NextLink from 'next/link'
-import { CalendarClock, ClipboardList, PackagePlus, Receipt } from 'lucide-react'
+import { CalendarClock, ClipboardList, PackagePlus, Receipt, Wallet } from 'lucide-react'
 import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { formatSar } from '@/lib/money'
 
@@ -19,7 +19,7 @@ type Delivery = {
 /** The café reads this code out to the driver; it is what closes the delivery. */
 const SHOWS_OTP = new Set(['READY_FOR_PICKUP', 'OUT_FOR_DELIVERY'])
 
-type Overview = { totalOrders: number; totalSpentHalalas: number; upcomingDeliveries: number }
+type Overview = { totalOrders: number; totalSpentHalalas: number; upcomingDeliveries: number; walletBalanceHalalas: number }
 
 export default function Dashboard({
   cafeName,
@@ -41,6 +41,13 @@ export default function Dashboard({
     { icon: ClipboardList, label: t('Overview.totalOrders'), value: format.number(overview.totalOrders) },
     { icon: Receipt, label: t('Overview.totalSpent'), value: formatSar(overview.totalSpentHalalas, locale) },
     { icon: CalendarClock, label: t('Overview.upcoming'), value: format.number(overview.upcomingDeliveries) },
+    {
+      icon: Wallet,
+      label: t('Overview.wallet'),
+      value: formatSar(overview.walletBalanceHalalas, locale),
+      // Credit is money the café can spend with us; it should read as an asset.
+      highlight: overview.walletBalanceHalalas > 0,
+    },
   ]
 
   return (
@@ -50,13 +57,13 @@ export default function Dashboard({
         <p className="mt-1 text-sm text-muted">{t('greetingSub')}</p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
         {stats.map((s) => (
-          <div key={s.label} className="rounded-2xl border border-line bg-ink-2 p-5">
+          <div key={s.label} className={`rounded-2xl border bg-ink-2 p-5 ${s.highlight ? 'border-rose-500/50' : 'border-line'}`}>
             <span className="grid h-10 w-10 place-items-center rounded-xl bg-rose-600/15 text-rose-500">
               <s.icon size={18} />
             </span>
-            <p className="mt-3 font-display text-3xl" dir="ltr">
+            <p className={`mt-3 font-display text-3xl ${s.highlight ? 'text-rose-500 dark:text-rose-400' : ''}`} dir="ltr">
               {s.value}
             </p>
             <p className="mt-1 text-xs text-muted">{s.label}</p>
