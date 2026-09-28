@@ -1,0 +1,62 @@
+import { z } from 'zod'
+import { MSG, email, googleMapsUrl, id, localeSchema, optional, phone, strongPassword, text } from './common'
+
+
+export const cafeAddressSchema = z.object({
+  label: text({ min: 1, max: 60 }),
+  city: text({ min: 1, max: 60 }),
+  district: text({ min: 1, max: 80 }),
+  street: text({ min: 1, max: 120 }),
+  buildingNumber: optional(text({ max: 10 })),
+  additionalNumber: optional(text({ max: 10 })),
+  postalCode: optional(text({ max: 10 })),
+  deliveryNotes: optional(text({ max: 300, multiline: true })),
+  isDefault: z.boolean().default(false),
+})
+export type CafeAddressInput = z.input<typeof cafeAddressSchema>
+
+/** Admin-only: creates the account AND its first address in one step. */
+export const createCafeAccountSchema = z.object({
+  cafeName: text({ min: 2, max: 120 }),
+  contactName: optional(text({ max: 100 })),
+  phone,
+  contactEmail: optional(email),
+  password: strongPassword,
+  googleMapsUrl: optional(googleMapsUrl),
+  address: cafeAddressSchema,
+})
+export type CreateCafeAccountInput = z.input<typeof createCafeAccountSchema>
+
+export const updateCafeSchema = z.object({
+  id,
+  cafeName: text({ min: 2, max: 120 }),
+  contactName: optional(text({ max: 100 })),
+  contactPhone: phone,
+  contactEmail: optional(email),
+  vatNumber: optional(text({ max: 15 })),
+  crNumber: optional(text({ max: 20 })),
+  internalNotes: optional(text({ max: 1000, multiline: true })),
+  preferredLocale: localeSchema,
+  googleMapsUrl: optional(googleMapsUrl),
+})
+
+export const cafeIdSchema = z.object({ id })
+
+export const resetCafePasswordSchema = z.object({ id, password: strongPassword })
+
+export const setCafeActiveSchema = z.object({ id, isActive: z.boolean() })
+
+export const deleteCafeAddressSchema = z.object({ id })
+export const setDefaultCafeAddressSchema = z.object({ id })
+
+/**
+ * A manual wallet correction. Signed: negative deducts. Entered in SAR and
+ * stored as halalas, like every other amount. The reason is mandatory —
+ * moving money by hand without a stated cause is exactly what an audit trail
+ * exists to prevent.
+ */
+export const adjustWalletSchema = z.object({
+  cafeId: id,
+  deltaSar: z.coerce.number({ error: MSG.invalid }).refine((n) => n !== 0, { error: MSG.invalid }).min(-100_000).max(100_000),
+  reason: text({ min: 3, max: 200 }),
+})

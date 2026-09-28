@@ -1,0 +1,176 @@
+// Seed data for the prototype. Images are Unsplash placeholders; <SmartImage>
+// falls back to a branded gradient if one fails to load.
+const img = (id) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=80`
+
+export const CATEGORIES = ['Signature Cakes', 'Entremets', 'Viennoiserie', 'Petits Fours']
+
+export const BUSINESS_WHATSAPP = '966500000000'
+
+export const seedProducts = [
+  {
+    id: 'p-01',
+    name: 'Rose Pistachio Layer',
+    nameAr: 'كيكة الورد والفستق',
+    description: 'Pistachio sponge, rose-water crémeux and raspberry confit under a velvet glaze.',
+    price: 185,
+    category: 'Signature Cakes',
+    image: img('photo-1578985545062-69928b1d9587'),
+    available: true,
+    tasting: true,
+    badge: 'Signature',
+  },
+  {
+    id: 'p-02',
+    name: 'Noir 70% Chocolate',
+    nameAr: 'كيكة الشوكولاتة الداكنة',
+    description: 'Single-origin dark chocolate ganache, cocoa nib praline and salted caramel core.',
+    price: 210,
+    category: 'Signature Cakes',
+    image: img('photo-1606313564200-e75d5e30476c'),
+    available: true,
+    tasting: true,
+    badge: 'Bestseller',
+  },
+  {
+    id: 'p-03',
+    name: 'Saffron Milk Cake',
+    nameAr: 'كيكة الحليب بالزعفران',
+    description: 'Tres leches soaked in saffron and cardamom milk, crowned with torched meringue.',
+    price: 160,
+    category: 'Signature Cakes',
+    image: img('photo-1565958011703-44f9829ba187'),
+    available: true,
+    tasting: true,
+  },
+  {
+    id: 'p-04',
+    name: 'Berry Chantilly Entremet',
+    nameAr: 'انتريميه التوت',
+    description: 'Vanilla bean mousse, mixed-berry insert and almond sablé base.',
+    price: 42,
+    category: 'Entremets',
+    image: img('photo-1488477181946-6428a0291777'),
+    available: true,
+    tasting: true,
+  },
+  {
+    id: 'p-05',
+    name: 'Lotus Cheesecake Slice',
+    nameAr: 'تشيز كيك اللوتس',
+    description: 'Baked New York cheesecake on a speculoos crust with Lotus butter ripple.',
+    price: 32,
+    category: 'Entremets',
+    image: img('photo-1533134242443-d4fd215305ad'),
+    available: true,
+    tasting: false,
+  },
+  {
+    id: 'p-06',
+    name: 'Butter Croissant',
+    nameAr: 'كرواسون بالزبدة',
+    description: '72-hour laminated dough with French AOP butter. Shatteringly crisp.',
+    price: 14,
+    category: 'Viennoiserie',
+    image: img('photo-1555507036-ab1f4038808a'),
+    available: true,
+    tasting: true,
+  },
+  {
+    id: 'p-07',
+    name: 'Date & Tahini Babka',
+    nameAr: 'بابكا التمر والطحينة',
+    description: 'Brioche swirled with Medjool date paste, tahini and toasted sesame.',
+    price: 58,
+    category: 'Viennoiserie',
+    image: img('photo-1509440159596-0249088772ff'),
+    available: true,
+    tasting: false,
+    badge: 'New',
+  },
+  {
+    id: 'p-08',
+    name: 'Macaron Collection',
+    nameAr: 'تشكيلة الماكرون',
+    description: 'Box of twelve: rose-lychee, pistachio, salted caramel, yuzu and more.',
+    price: 78,
+    category: 'Petits Fours',
+    image: img('photo-1569864358642-9d1684040f43'),
+    available: true,
+    tasting: true,
+  },
+  {
+    id: 'p-09',
+    name: 'Brown Butter Cookies',
+    nameAr: 'كوكيز الزبدة البنية',
+    description: 'Six chewy cookies with brown butter, Valrhona chunks and flaky salt.',
+    price: 36,
+    category: 'Petits Fours',
+    image: img('photo-1558961363-fa8fdf82db35'),
+    available: false,
+    tasting: false,
+  },
+]
+
+const hoursAgo = (h) => new Date(Date.now() - h * 3600_000).toISOString()
+
+export const seedOrders = [
+  {
+    id: 'ORD-1042',
+    customer: 'Sara Al-Qahtani',
+    phone: '+966 55 214 8830',
+    items: [
+      { id: 'p-01', name: 'Rose Pistachio Layer', qty: 1, price: 185 },
+      { id: 'p-08', name: 'Macaron Collection', qty: 2, price: 78 },
+    ],
+    total: 341,
+    fulfillment: 'Delivery',
+    status: 'Preparing',
+    createdAt: hoursAgo(2),
+  },
+  {
+    id: 'ORD-1041',
+    customer: 'Omar Haddad',
+    phone: '+966 50 781 2201',
+    items: [{ id: 'p-02', name: 'Noir 70% Chocolate', qty: 1, price: 210 }],
+    total: 210,
+    fulfillment: 'Pickup',
+    status: 'Ready',
+    createdAt: hoursAgo(5),
+  },
+  {
+    id: 'ORD-1040',
+    customer: 'Lina Farouk',
+    phone: '+966 54 330 1177',
+    items: [
+      { id: 'p-06', name: 'Butter Croissant', qty: 6, price: 14 },
+      { id: 'p-07', name: 'Date & Tahini Babka', qty: 1, price: 58 },
+    ],
+    total: 142,
+    fulfillment: 'Delivery',
+    status: 'Delivered',
+    createdAt: hoursAgo(26),
+  },
+]
+
+export const seedTastingRequests = [
+  {
+    id: 'TST-208',
+    cafeName: 'Brew Theory',
+    phone: '+966 56 902 4410',
+    city: 'Riyadh',
+    items: ['Rose Pistachio Layer', 'Noir 70% Chocolate', 'Butter Croissant'],
+    notes: 'Looking for 2 cakes for the weekend menu.',
+    status: 'New',
+    createdAt: hoursAgo(1),
+  },
+  {
+    id: 'TST-207',
+    cafeName: 'Hijra Coffee Co.',
+    phone: '+966 55 118 7392',
+    city: 'Jeddah',
+    items: ['Saffron Milk Cake', 'Macaron Collection'],
+    notes: '',
+    status: 'Scheduled',
+    createdAt: hoursAgo(20),
+  },
+]
